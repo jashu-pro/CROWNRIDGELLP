@@ -5,11 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-<<<<<<< HEAD
     "build": "vite build",
-=======
-    "build": "tsc -b && vite build",
->>>>>>> ed44e14d2b74d3b8184e657b51d2a9fc421a6355
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -21,11 +17,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
-<<<<<<< HEAD
-=======
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
->>>>>>> ed44e14d2b74d3b8184e657b51d2a9fc421a6355
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
@@ -34,11 +25,6 @@
     "globals": "^15.9.0",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.10",
-<<<<<<< HEAD
-=======
-    "typescript": "^5.5.3",
-    "typescript-eslint": "^8.0.1",
->>>>>>> ed44e14d2b74d3b8184e657b51d2a9fc421a6355
     "vite": "^5.4.1"
   }
 }
