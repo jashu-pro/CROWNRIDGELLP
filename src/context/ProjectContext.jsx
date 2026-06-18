@@ -19,6 +19,52 @@ export const ProjectProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState(null)
 
+  const [userProfile, setUserProfileState] = useState(() => {
+    const saved = localStorage.getItem('ko_user_profile')
+    if (saved) return JSON.parse(saved)
+    return {
+      fullName: 'Alex Morgan',
+      emailAddress: 'admin@kickoff.com',
+      phoneNumber: '+1 (555) 0199',
+      avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA7Qk6fsUnOGWZrr6x1jXkrICj7qQZch0GPR6q02C-ag7h7qqBkpwRCkgfLldj01t-GVXAVgkm7b2QAaH3oXtCHE9UdQnvVShiu5nAeTnqzabdQ4GCMEM3s_XmWsb5wKW7DbHf0TtGXHZgY0MpCpCLGsvgpsgH_fR8aGZiYfSzDHOAMp24X5_W_b0uIIfWoJuYHoTne7UwdQPP8rptwHpDvnrCz2nqx37wxVnJHuSO0Na4DbTjYf9HuxpX3AWlafe7VaUoEYdPq-l4'
+    }
+  })
+
+  const setUserProfile = (profile) => {
+    setUserProfileState(profile)
+    localStorage.setItem('ko_user_profile', JSON.stringify(profile))
+  }
+
+  const [settings, setSettingsState] = useState(() => {
+    const saved = localStorage.getItem('ko_settings')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      return { ...parsed, theme: 'light' }
+    }
+    return {
+      theme: 'light',
+      language: 'English',
+      emailNotifications: true,
+      remindersFrequency: 'Daily Digest',
+      twoFactorAuth: false,
+      sessionTimeout: '30 min',
+      publicProfile: true,
+      shareStats: true
+    }
+  })
+
+  const updateSettings = (newSettings) => {
+    const cleanSettings = { ...newSettings, theme: 'light' }
+    setSettingsState(cleanSettings)
+    localStorage.setItem('ko_settings', JSON.stringify(cleanSettings))
+    document.documentElement.classList.remove('dark')
+  }
+
+  // Ensure dark mode is cleaned up on load
+  useEffect(() => {
+    document.documentElement.classList.remove('dark')
+  }, [])
+
   // Check Auth Session
   const checkSession = useCallback(() => {
     if (supabase) {
@@ -109,7 +155,11 @@ export const ProjectProvider = ({ children }) => {
         refreshProjects,
         session,
         logout,
-        checkSession
+        checkSession,
+        userProfile,
+        setUserProfile,
+        settings,
+        updateSettings
       }}
     >
       {children}
