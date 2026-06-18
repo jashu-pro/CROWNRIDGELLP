@@ -63,3 +63,21 @@ input:focus, select:focus, textarea:focus {
     display: block !important;
   }
 }
+
+button, 
+a, 
+select, 
+option,
+input[type="submit"], 
+input[type="button"], 
+input[type="checkbox"], 
+input[type="radio"],
+[role="button"] {
+  cursor: pointer;
+}
+
+button span.material-symbols-outlined,
+button img {
+  pointer-events: none;
+}
+

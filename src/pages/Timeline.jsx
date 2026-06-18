@@ -6,7 +6,7 @@ import { useToast } from '../components/Toast'
 import { db } from '../lib/db'
 
 export const Timeline = () => {
-  const { projectId, project } = useProject()
+  const { projectId, project, refreshProjects } = useProject()
   const { showToast } = useToast()
 
   const [milestones, setMilestones] = useState([])
@@ -89,6 +89,7 @@ export const Timeline = () => {
         status: mStatus,
         progress: parseInt(mProgress) || 0
       })
+      await refreshProjects()
       showToast(selectedMilestone ? 'Milestone updated!' : 'Milestone added!', 'success')
       setShowModifyModal(false)
       fetchData()
@@ -103,6 +104,7 @@ export const Timeline = () => {
     if (!window.confirm('Are you sure you want to remove this milestone?')) return
     try {
       await db.milestones.delete(id)
+      await refreshProjects()
       showToast('Milestone removed successfully', 'success')
       setShowModifyModal(false)
       fetchData()
@@ -146,7 +148,7 @@ export const Timeline = () => {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-primary bg-surface-container-high px-2 py-0.5 rounded text-label-sm font-label-sm uppercase">
-                PROJECT ID: #{projectId ? projectId.substring(0, 8) : '2024-081'}
+                PROJECT ID: #{projectId ? projectId.substring(0, 8) : '2026-081'}
               </span>
               <h2 className="text-on-surface-variant font-label-md text-label-md">
                 {project ? project.client_name : 'Consultancy Engagements'}
@@ -196,7 +198,10 @@ export const Timeline = () => {
               return (
                 <div
                   key={milestone.id}
-                  onClick={() => handleOpenEdit(milestone)}
+                onClick={() => {
+                  console.log("Clicked: Timeline Row / Milestone", milestone.id);
+                  handleOpenEdit(milestone);
+                }}
                   className={`flex flex-col md:flex-row items-center md:justify-center group cursor-pointer ${
                     isScheduled ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500' : ''
                   }`}
@@ -249,7 +254,7 @@ export const Timeline = () => {
                           {milestone.dates || 'TBD'}
                         </span>
                       </div>
-                      <div className="md:w-1/2 md:pl-12 mt-4 md:mt-0 w-full" onClick={(e) => e.stopPropagation()}>
+                      <div className="md:w-1/2 md:pl-12 mt-4 md:mt-0 w-full">
                         <div className="md:hidden">
                           <span
                             className={`inline-flex px-2 py-1 rounded ${
@@ -264,10 +269,16 @@ export const Timeline = () => {
                           >
                             {milestone.status.replace('_', ' ')}
                           </span>
-                          <h3 className="font-headline-sm text-headline-sm mb-1" onClick={() => handleOpenEdit(milestone)}>{milestone.title}</h3>
+                          <h3 className="font-headline-sm text-headline-sm mb-1" onClick={() => {
+                            console.log("Clicked: Card Title / Milestone Title", milestone.id);
+                            handleOpenEdit(milestone);
+                          }}>{milestone.title}</h3>
                         </div>
                         <div
-                          onClick={() => handleOpenEdit(milestone)}
+                          onClick={() => {
+                            console.log("Clicked: Milestone Card", milestone.id);
+                            handleOpenEdit(milestone);
+                          }}
                           className={`bg-surface-container-lowest p-5 rounded-xl border shadow-sm group-hover:shadow-md transition-shadow cursor-pointer ${
                             milestone.status === 'in_progress'
                               ? 'border-2 border-primary ring-4 ring-primary/5'
@@ -290,6 +301,7 @@ export const Timeline = () => {
                             <div className="mt-4 flex justify-between items-center">
                               <button
                                 onClick={(e) => {
+                                  console.log("Clicked: View Blockers Button for Milestone", milestone.id);
                                   e.stopPropagation()
                                   setShowBlockersModal(true)
                                 }}
@@ -356,7 +368,7 @@ export const Timeline = () => {
                           {milestone.dates || 'TBD'}
                         </span>
                       </div>
-                      <div className="md:w-1/2 md:pr-12 mt-4 md:mt-0 w-full" onClick={(e) => e.stopPropagation()}>
+                      <div className="md:w-1/2 md:pr-12 mt-4 md:mt-0 w-full">
                         <div className="md:hidden">
                           <span
                             className={`inline-flex px-2 py-1 rounded ${
@@ -371,10 +383,16 @@ export const Timeline = () => {
                           >
                             {milestone.status.replace('_', ' ')}
                           </span>
-                          <h3 className="font-headline-sm text-headline-sm mb-1" onClick={() => handleOpenEdit(milestone)}>{milestone.title}</h3>
+                          <h3 className="font-headline-sm text-headline-sm mb-1" onClick={() => {
+                            console.log("Clicked: Card Title / Milestone Title", milestone.id);
+                            handleOpenEdit(milestone);
+                          }}>{milestone.title}</h3>
                         </div>
                         <div
-                          onClick={() => handleOpenEdit(milestone)}
+                          onClick={() => {
+                            console.log("Clicked: Milestone Card", milestone.id);
+                            handleOpenEdit(milestone);
+                          }}
                           className={`bg-surface-container-lowest p-5 rounded-xl border shadow-sm group-hover:shadow-md transition-shadow cursor-pointer ${
                             milestone.status === 'in_progress'
                               ? 'border-2 border-primary ring-4 ring-primary/5'
@@ -413,7 +431,7 @@ export const Timeline = () => {
               <div className="text-center">
                 <p className="text-label-sm font-label-sm text-outline uppercase tracking-tighter">PROJECT COMPLETION</p>
                 <p className="font-headline-md text-headline-md">
-                  {project?.end_date ? new Date(project.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'August 15, 2024'}
+                  {project?.end_date ? new Date(project.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'August 15, 2026'}
                 </p>
               </div>
             </div>
@@ -451,7 +469,10 @@ export const Timeline = () => {
             Export PDF
           </button>
           <button
-            onClick={handleOpenAdd}
+            onClick={() => {
+              console.log("Clicked: Modify Schedule Button");
+              handleOpenAdd();
+            }}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 active:scale-95 duration-100 shadow-sm font-label-md text-label-md flex items-center gap-2"
           >
             <Icon name="edit" size={18} />

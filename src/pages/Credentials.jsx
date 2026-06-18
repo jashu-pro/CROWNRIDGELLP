@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Layout } from '../components/Layout'
 import { Icon } from '../components/Icon'
 import { useProject } from '../context/ProjectContext'
@@ -46,8 +46,19 @@ export const Credentials = () => {
     fetchIntegrations()
   }, [fetchIntegrations])
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.cred-row-menu')) {
+        setActiveMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const handleAddIntegration = async (e) => {
     e.preventDefault()
+    console.log("Clicked: Submit Add Integration Form")
     if (!projectId) {
       showToast('Please select or create a project first', 'error')
       return
@@ -84,6 +95,7 @@ export const Credentials = () => {
 
   const handleEditIntegration = async (e) => {
     e.preventDefault()
+    console.log("Clicked: Submit Edit Integration Form")
     if (!selectedIntegration) return
 
     setModalLoading(true)
@@ -107,6 +119,7 @@ export const Credentials = () => {
   }
 
   const handleDeleteIntegration = async (id) => {
+    setActiveMenuId(null)
     if (!window.confirm('Are you sure you want to disconnect this integration?')) return
 
     try {
@@ -129,7 +142,10 @@ export const Credentials = () => {
             </p>
           </div>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              console.log("Clicked: Add Integration Button");
+              setShowAddModal(true);
+            }}
             className="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-all shadow-sm"
           >
             <Icon name="add" size={18} />
@@ -173,9 +189,12 @@ export const Credentials = () => {
                     </span>
                     <p className="text-label-sm text-on-surface-variant mt-1">Last used: {cred.last_used}</p>
                   </div>
-                  <div className="relative">
+                  <div className="relative cred-row-menu">
                     <button
-                      onClick={() => setActiveMenuId(activeMenuId === cred.id ? null : cred.id)}
+                      onClick={() => {
+                        console.log("Clicked: Integration Action Menu Toggle", cred.id);
+                        setActiveMenuId(activeMenuId === cred.id ? null : cred.id)
+                      }}
                       className="p-2 hover:bg-surface-container rounded-full"
                     >
                       <Icon name="more_vert" size={20} className="text-outline" />
@@ -183,13 +202,19 @@ export const Credentials = () => {
                     {activeMenuId === cred.id && (
                       <div className="absolute right-0 mt-2 w-48 bg-white border border-border-subtle rounded-lg shadow-lg py-1 z-10">
                         <button
-                          onClick={() => handleOpenEdit(cred)}
+                          onClick={() => {
+                            console.log("Clicked: Edit Integration Action", cred.id);
+                            handleOpenEdit(cred);
+                          }}
                           className="w-full text-left px-4 py-2 text-body-md hover:bg-surface-container-low flex items-center gap-2"
                         >
                           <Icon name="edit" size={16} /> Edit
                         </button>
                         <button
-                          onClick={() => handleDeleteIntegration(cred.id)}
+                          onClick={() => {
+                            console.log("Clicked: Disconnect Integration Action", cred.id);
+                            handleDeleteIntegration(cred.id);
+                          }}
                           className="w-full text-left px-4 py-2 text-body-md hover:bg-error-container/10 text-status-error flex items-center gap-2"
                         >
                           <Icon name="delete" size={16} /> Disconnect
@@ -218,7 +243,10 @@ export const Credentials = () => {
             <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-surface-muted/50">
               <h3 className="font-headline-sm text-headline-sm text-on-surface">Add Integration</h3>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  console.log("Clicked: Close Add Integration Modal");
+                  setShowAddModal(false);
+                }}
                 className="text-outline hover:text-on-surface p-1 rounded-full hover:bg-surface-container transition-colors"
               >
                 <Icon name="close" size={20} />
@@ -280,7 +308,10 @@ export const Credentials = () => {
               <div className="pt-4 border-t border-border-subtle flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    console.log("Clicked: Close Add Integration Modal");
+                    setShowAddModal(false);
+                  }}
                   className="px-4 py-2 border border-border-subtle rounded-lg text-on-surface-variant font-label-md hover:bg-surface-container-low transition-all"
                 >
                   Cancel
@@ -305,7 +336,10 @@ export const Credentials = () => {
             <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-surface-muted/50">
               <h3 className="font-headline-sm text-headline-sm text-on-surface">Configure Integration</h3>
               <button
-                onClick={() => setShowEditModal(false)}
+                onClick={() => {
+                  console.log("Clicked: Close Edit Integration Modal");
+                  setShowEditModal(false);
+                }}
                 className="text-outline hover:text-on-surface p-1 rounded-full hover:bg-surface-container transition-colors"
               >
                 <Icon name="close" size={20} />
@@ -358,7 +392,10 @@ export const Credentials = () => {
               <div className="pt-4 border-t border-border-subtle flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowEditModal(false)}
+                  onClick={() => {
+                    console.log("Clicked: Close Edit Integration Modal");
+                    setShowEditModal(false);
+                  }}
                   className="px-4 py-2 border border-border-subtle rounded-lg text-on-surface-variant font-label-md hover:bg-surface-container-low transition-all"
                 >
                   Cancel

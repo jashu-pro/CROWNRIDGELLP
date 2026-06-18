@@ -40,6 +40,7 @@ export const ProjectCreation = () => {
 
   const handleAddInlineMember = (e) => {
     e.preventDefault()
+    console.log("Clicked: Add Inline Member Submit")
     if (!inlineName.trim()) {
       showToast('Member name is required', 'error')
       return
@@ -62,12 +63,14 @@ export const ProjectCreation = () => {
   // Remove member from list
   const handleRemoveMember = (idxToRemove) => {
     const member = teamMembers[idxToRemove]
+    console.log("Clicked: Remove Team Member Badge", member.name)
     setTeamMembers(teamMembers.filter((_, idx) => idx !== idxToRemove))
     showToast(`Removed ${member.name}`, 'success')
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    console.log("Clicked: Submit Project Creation Form")
     if (!formData.projectName || !formData.clientName) {
       showToast('Client Name and Project Name are required', 'error')
       return
@@ -176,7 +179,12 @@ export const ProjectCreation = () => {
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
               Project Configuration
             </span>
-            <Icon name="more_vert" className="text-outline cursor-pointer hover:text-on-surface" size={20} />
+            <Icon
+              name="more_vert"
+              className="text-outline cursor-pointer hover:text-on-surface"
+              size={20}
+              onClick={() => console.log("Clicked: Project Creation Config Context Menu Icon")}
+            />
           </div>
 
           <form className="p-margin-md space-y-6" onSubmit={handleSubmit}>
@@ -314,7 +322,10 @@ export const ProjectCreation = () => {
                       {member.name}
                       <span
                         className="cursor-pointer text-outline hover:text-status-error flex items-center"
-                        onClick={() => handleRemoveMember(idx)}
+                        onClick={() => {
+                          console.log("Clicked: Remove Team Member Action Button", member.name)
+                          handleRemoveMember(idx)
+                        }}
                       >
                         <Icon name="close" size={14} />
                       </span>
@@ -322,7 +333,10 @@ export const ProjectCreation = () => {
                   ))}
                   <button
                     type="button"
-                    onClick={() => setShowAddMemberInline(!showAddMemberInline)}
+                    onClick={() => {
+                      console.log("Clicked: Show Add Inline Member Form Toggle")
+                      setShowAddMemberInline(!showAddMemberInline)
+                    }}
                     className="text-primary hover:bg-primary-fixed px-2 py-1 rounded-md font-label-md transition-colors flex items-center gap-1"
                   >
                     <Icon name="add" size={14} /> Add
@@ -369,14 +383,20 @@ export const ProjectCreation = () => {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setShowAddMemberInline(false)}
+                      onClick={() => {
+                        console.log("Clicked: Cancel Add Inline Member Button")
+                        setShowAddMemberInline(false)
+                      }}
                       className="px-3 py-1 border border-border-subtle rounded text-label-md font-semibold"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
-                      onClick={handleAddInlineMember}
+                      onClick={(e) => {
+                        console.log("Clicked: Add Inline Member Button")
+                        handleAddInlineMember(e)
+                      }}
                       className="px-4 py-1 bg-primary text-white rounded text-label-md font-semibold hover:opacity-90"
                     >
                       Add
@@ -393,7 +413,10 @@ export const ProjectCreation = () => {
                   <button
                     key={btn.id}
                     type="button"
-                    onClick={() => setPriority(btn.id)}
+                    onClick={() => {
+                      console.log("Clicked: Set Priority Level Button", btn.id)
+                      setPriority(btn.id)
+                    }}
                     className={`flex-1 py-2 px-4 rounded-lg border font-label-md transition-all flex items-center justify-center gap-2 ${
                       priority === btn.id
                         ? 'border-primary bg-primary-container/10 text-primary font-bold'
@@ -424,7 +447,10 @@ export const ProjectCreation = () => {
             <div className="pt-6 border-t border-border-subtle flex justify-end gap-4">
               <button
                 type="button"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => {
+                  console.log("Clicked: Cancel Project Creation Form Button")
+                  navigate('/dashboard')
+                }}
                 className="px-6 py-2 rounded-lg border border-border-subtle text-on-surface-variant font-label-md hover:bg-surface-container-low transition-all"
               >
                 Cancel

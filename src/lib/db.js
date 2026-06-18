@@ -13,11 +13,11 @@ export const generateUUID = () => {
 // DEFAULT MOCK DATA SEEDS FOR LOCAL STORAGE
 // ----------------------------------------------------
 const defaultProjects = [
-  { id: 'p1', client_name: 'Acme Corp', project_name: 'Cloud Infrastructure Migration', industry: 'Technology', project_type: 'Cloud Transformation', contract_value: 125000, start_date: '2024-01-12', end_date: '2024-08-15', priority: 'medium', status: 'active', notes: 'Primary target is to migrate the core legacy infrastructure to AWS VPC with zero downtime.' },
-  { id: 'p2', client_name: 'TechStart Inc', project_name: 'Data Analytics Platform', industry: 'Technology', project_type: 'Data Platform', contract_value: 200000, start_date: '2024-03-10', end_date: '2024-10-28', priority: 'high', status: 'at_risk', notes: 'Building a real-time ingestion pipeline. Team struggling with AWS Kinesis setup.' },
-  { id: 'p3', client_name: 'Global Manufacturing', project_name: 'ERP Implementation', industry: 'Manufacturing', project_type: 'ERP', contract_value: 350000, start_date: '2024-02-01', end_date: '2024-12-31', priority: 'low', status: 'completed', notes: 'SAP migration completed. System user training ongoing.' },
-  { id: 'p4', client_name: 'FinServe Ltd', project_name: 'API Gateway Redesign', industry: 'Financial Services', project_type: 'API Redesign', contract_value: 75000, start_date: '2024-04-15', end_date: '2024-09-30', priority: 'medium', status: 'active', notes: 'Updating authentication protocols. Integrating OAuth2.' },
-  { id: 'p5', client_name: 'RetailMax', project_name: 'Mobile App Development', industry: 'Retail', project_type: 'Mobile App', contract_value: 180000, start_date: '2024-05-01', end_date: '2024-11-30', priority: 'low', status: 'on_hold', notes: 'Project paused due to resource redirection.' }
+  { id: 'p1', client_name: 'Acme Corp', project_name: 'Cloud Infrastructure Migration', industry: 'Technology', project_type: 'Cloud Transformation', contract_value: 125000, start_date: '2026-01-12', end_date: '2026-08-15', priority: 'medium', status: 'active', notes: 'Primary target is to migrate the core legacy infrastructure to AWS VPC with zero downtime.' },
+  { id: 'p2', client_name: 'TechStart Inc', project_name: 'Data Analytics Platform', industry: 'Technology', project_type: 'Data Platform', contract_value: 200000, start_date: '2026-03-10', end_date: '2026-10-28', priority: 'high', status: 'at_risk', notes: 'Building a real-time ingestion pipeline. Team struggling with AWS Kinesis setup.' },
+  { id: 'p3', client_name: 'Global Manufacturing', project_name: 'ERP Implementation', industry: 'Manufacturing', project_type: 'ERP', contract_value: 350000, start_date: '2026-02-01', end_date: '2026-12-31', priority: 'low', status: 'completed', notes: 'SAP migration completed. System user training ongoing.' },
+  { id: 'p4', client_name: 'FinServe Ltd', project_name: 'API Gateway Redesign', industry: 'Financial Services', project_type: 'API Redesign', contract_value: 75000, start_date: '2026-04-15', end_date: '2026-09-30', priority: 'medium', status: 'active', notes: 'Updating authentication protocols. Integrating OAuth2.' },
+  { id: 'p5', client_name: 'RetailMax', project_name: 'Mobile App Development', industry: 'Retail', project_type: 'Mobile App', contract_value: 180000, start_date: '2026-05-01', end_date: '2026-11-30', priority: 'low', status: 'on_hold', notes: 'Project paused due to resource redirection.' }
 ]
 
 const defaultTeamMembers = [
@@ -30,17 +30,17 @@ const defaultTeamMembers = [
 ]
 
 const defaultTasks = [
-  { id: 't1', project_id: 'p1', title: 'Stakeholder interview and requirement documentation', due_date: '2024-10-12', priority: 'critical', status: 'pending', owner_name: 'Alex Rivera', owner_avatar: '', completed: false },
-  { id: 't2', project_id: 'p1', title: 'Infrastructure audit of legacy on-prem systems', due_date: '2024-10-10', priority: 'high', status: 'completed', owner_name: 'Elena Rodriguez', owner_avatar: '', completed: true },
-  { id: 't3', project_id: 'p1', title: 'Initial security baseline and compliance review', due_date: '2024-10-15', priority: 'medium', status: 'pending', owner_name: 'Marcus Jones', owner_avatar: '', completed: false },
-  { id: 't4', project_id: 'p1', title: 'Define migration path for non-critical assets', due_date: '2024-10-18', priority: 'low', status: 'pending', owner_name: 'Sarah Chen', owner_avatar: '', completed: false }
+  { id: 't1', project_id: 'p1', title: 'Stakeholder interview and requirement documentation', due_date: '2026-10-12', priority: 'critical', status: 'pending', owner_name: 'Alex Rivera', owner_avatar: '', completed: false },
+  { id: 't2', project_id: 'p1', title: 'Infrastructure audit of legacy on-prem systems', due_date: '2026-10-10', priority: 'high', status: 'completed', owner_name: 'Elena Rodriguez', owner_avatar: '', completed: true },
+  { id: 't3', project_id: 'p1', title: 'Initial security baseline and compliance review', due_date: '2026-10-15', priority: 'medium', status: 'pending', owner_name: 'Marcus Jones', owner_avatar: '', completed: false },
+  { id: 't4', project_id: 'p1', title: 'Define migration path for non-critical assets', due_date: '2026-10-18', priority: 'low', status: 'pending', owner_name: 'Sarah Chen', owner_avatar: '', completed: false }
 ]
 
 const defaultMilestones = [
-  { id: 'ms1', project_id: 'p1', title: 'Project Kickoff & Requirements', description: 'Initial stakeholder alignment and technical scope definition completed.', dates: 'Jan 12 — Jan 28', status: 'completed', progress: 100 },
-  { id: 'ms2', project_id: 'p1', title: 'Infrastructure Provisioning', description: 'Cloud VPC setup and network security group configurations. Waiting for provider verification.', dates: 'Feb 01 — Feb 15', status: 'delayed', progress: 45 },
-  { id: 'ms3', project_id: 'p1', title: 'Data Migration Scripting', description: 'Developing automated ETL pipelines for legacy database transfer.', dates: 'Mar 10 — Apr 05', status: 'in_progress', progress: 12 },
-  { id: 'ms4', project_id: 'p1', title: 'System Integration Testing', description: 'Comprehensive end-to-end testing with third-party service mocks.', dates: 'Apr 15 — May 10', status: 'scheduled', progress: 0 }
+  { id: 'ms1', project_id: 'p1', title: 'Project Kickoff & Requirements', description: 'Initial stakeholder alignment and technical scope definition completed.', dates: 'Jan 12 — Jan 28, 2026', status: 'completed', progress: 100 },
+  { id: 'ms2', project_id: 'p1', title: 'Infrastructure Provisioning', description: 'Cloud VPC setup and network security group configurations. Waiting for provider verification.', dates: 'Feb 01 — Feb 15, 2026', status: 'delayed', progress: 45 },
+  { id: 'ms3', project_id: 'p1', title: 'Data Migration Scripting', description: 'Developing automated ETL pipelines for legacy database transfer.', dates: 'Mar 10 — Apr 05, 2026', status: 'in_progress', progress: 12 },
+  { id: 'ms4', project_id: 'p1', title: 'System Integration Testing', description: 'Comprehensive end-to-end testing with third-party service mocks.', dates: 'Apr 15 — May 10, 2026', status: 'scheduled', progress: 0 }
 ]
 
 const defaultChannels = [
@@ -81,6 +81,11 @@ const defaultIntegrations = [
 class LocalDB {
   getTable(key, defaultVal) {
     const data = localStorage.getItem(`ko_${key}`)
+    if (data && data.includes('2024-')) {
+      localStorage.removeItem(`ko_${key}`)
+      localStorage.setItem(`ko_${key}`, JSON.stringify(defaultVal))
+      return defaultVal
+    }
     if (!data) {
       localStorage.setItem(`ko_${key}`, JSON.stringify(defaultVal))
       return defaultVal

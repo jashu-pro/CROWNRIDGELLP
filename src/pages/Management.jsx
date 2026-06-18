@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Layout } from '../components/Layout'
 import { Icon } from '../components/Icon'
@@ -10,6 +10,8 @@ export const Management = () => {
   const navigate = useNavigate()
   const { projectId, setProjectId, refreshProjects } = useProject()
   const { showToast } = useToast()
+
+  const filterRef = useRef(null)
 
   const [localProjects, setLocalProjects] = useState([])
   const [tasks, setTasks] = useState([])
@@ -50,6 +52,19 @@ export const Management = () => {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setShowFilterDropdown(false)
+      }
+      if (!event.target.closest('.project-row-menu')) {
+        setActiveMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Get project progress
   const getProjectProgress = (pId, projStatus) => {
@@ -121,6 +136,7 @@ export const Management = () => {
 
   // Delete project
   const handleDeleteProject = async (id, name) => {
+    setActiveMenuId(null)
     if (!window.confirm(`Are you sure you want to permanently delete "${name}"? All associated data will be removed.`)) return
     try {
       await db.projects.delete(id)
@@ -167,9 +183,12 @@ export const Management = () => {
           </div>
           <div className="flex gap-3 items-center">
             {/* Filter button dropdown toggle */}
-            <div className="relative">
+            <div ref={filterRef} className="relative">
               <button
-                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                onClick={() => {
+                  console.log("Clicked: Filter dropdown toggle");
+                  setShowFilterDropdown(!showFilterDropdown);
+                }}
                 className="px-4 py-2 border border-border-subtle bg-surface text-primary font-label-md text-label-md rounded-lg flex items-center gap-2 hover:bg-surface-container-low transition-colors bg-white"
               >
                 <Icon name="filter_list" size={18} />
@@ -178,31 +197,31 @@ export const Management = () => {
               {showFilterDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-border-subtle rounded-lg shadow-lg py-1 z-10">
                   <button
-                    onClick={() => { setStatusFilter('all'); setShowFilterDropdown(false); }}
+                    onClick={() => { console.log("Clicked: Filter Option All"); setStatusFilter('all'); setShowFilterDropdown(false); }}
                     className="w-full text-left px-4 py-2 hover:bg-surface-container-low text-body-md"
                   >
                     All Statuses
                   </button>
                   <button
-                    onClick={() => { setStatusFilter('active'); setShowFilterDropdown(false); }}
+                    onClick={() => { console.log("Clicked: Filter Option Active"); setStatusFilter('active'); setShowFilterDropdown(false); }}
                     className="w-full text-left px-4 py-2 hover:bg-surface-container-low text-body-md"
                   >
                     Active
                   </button>
                   <button
-                    onClick={() => { setStatusFilter('at_risk'); setShowFilterDropdown(false); }}
+                    onClick={() => { console.log("Clicked: Filter Option At Risk"); setStatusFilter('at_risk'); setShowFilterDropdown(false); }}
                     className="w-full text-left px-4 py-2 hover:bg-surface-container-low text-body-md"
                   >
                     At Risk
                   </button>
                   <button
-                    onClick={() => { setStatusFilter('completed'); setShowFilterDropdown(false); }}
+                    onClick={() => { console.log("Clicked: Filter Option Completed"); setStatusFilter('completed'); setShowFilterDropdown(false); }}
                     className="w-full text-left px-4 py-2 hover:bg-surface-container-low text-body-md"
                   >
                     Completed
                   </button>
                   <button
-                    onClick={() => { setStatusFilter('on_hold'); setShowFilterDropdown(false); }}
+                    onClick={() => { console.log("Clicked: Filter Option On Hold"); setStatusFilter('on_hold'); setShowFilterDropdown(false); }}
                     className="w-full text-left px-4 py-2 hover:bg-surface-container-low text-body-md"
                   >
                     On Hold
@@ -248,8 +267,24 @@ export const Management = () => {
                       }`}
                     >
                       <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-on-surface">{project.project_name}</p>
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            console.log("Clicked: Set Active Project from Management Table", project.project_name)
+                            setProjectId(project.id)
+                            showToast(`Active project switched to: ${project.project_name}`, 'success')
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              setProjectId(project.id)
+                              showToast(`Active project switched to: ${project.project_name}`, 'success')
+                            }
+                          }}
+                          className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors group/name outline-none rounded"
+                        >
+                          <p className="font-semibold text-on-surface group-hover/name:text-primary">{project.project_name}</p>
                           {isSelected && (
                             <span className="bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Active</span>
                           )}
@@ -284,6 +319,7 @@ export const Management = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => {
+                              console.log("Clicked: Preview Action for Project", project.id);
                               setProjectId(project.id)
                               navigate('/preview')
                               showToast(`Loaded details for: ${project.project_name}`, 'success')
@@ -294,7 +330,10 @@ export const Management = () => {
                             <Icon name="visibility" size={18} className="text-outline hover:text-primary" />
                           </button>
                           <button
-                            onClick={() => handleOpenEdit(project)}
+                            onClick={() => {
+                              console.log("Clicked: Edit Action for Project", project.id);
+                              handleOpenEdit(project);
+                            }}
                             title="Edit Project parameters"
                             className="p-2 hover:bg-surface-container rounded-full"
                           >
@@ -302,9 +341,12 @@ export const Management = () => {
                           </button>
                           
                           {/* Row actions dropdown */}
-                          <div className="relative">
+                          <div className="relative project-row-menu">
                             <button
-                              onClick={() => setActiveMenuId(activeMenuId === project.id ? null : project.id)}
+                              onClick={() => {
+                                console.log("Clicked: Project Action Menu Toggle", project.id);
+                                setActiveMenuId(activeMenuId === project.id ? null : project.id)
+                              }}
                               className="p-2 hover:bg-surface-container rounded-full"
                             >
                               <Icon name="more_vert" size={18} className="text-outline hover:text-primary" />
@@ -312,7 +354,10 @@ export const Management = () => {
                             {activeMenuId === project.id && (
                               <div className="absolute right-0 mt-1 w-36 bg-white border border-border-subtle rounded-lg shadow-lg py-1 z-10">
                                 <button
-                                  onClick={() => handleDeleteProject(project.id, project.project_name)}
+                                  onClick={() => {
+                                    console.log("Clicked: Delete Action for Project", project.id);
+                                    handleDeleteProject(project.id, project.project_name);
+                                  }}
                                   className="w-full text-left px-4 py-2 text-label-md hover:bg-error-container/10 text-status-error flex items-center gap-1.5"
                                 >
                                   <Icon name="delete" size={16} /> Delete

@@ -91,6 +91,16 @@ export const Communication = () => {
     fetchData()
   }, [fetchData])
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.stakeholder-row-menu')) {
+        setActiveStakeholderMenu(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   // Discard changes
   const handleDiscard = async () => {
     await fetchData()
@@ -295,13 +305,19 @@ export const Communication = () => {
           </div>
           <div className="flex gap-3">
             <button
-              onClick={handleDiscard}
+              onClick={() => {
+                console.log("Clicked: Communication Discard Changes");
+                handleDiscard();
+              }}
               className="px-4 py-2 border border-border-subtle text-primary font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-all bg-white"
             >
               Discard Changes
             </button>
             <button
-              onClick={handleSaveProtocol}
+              onClick={() => {
+                console.log("Clicked: Communication Save Protocol");
+                handleSaveProtocol();
+              }}
               disabled={loading}
               className={`px-6 py-2 font-label-md text-label-md rounded-lg shadow-sm transition-all ${
                 success
@@ -341,7 +357,10 @@ export const Communication = () => {
                 {channels.map((channel) => (
                   <div
                     key={channel.id}
-                    onClick={() => handleToggleChannel(channel)}
+                    onClick={() => {
+                      console.log("Clicked: Toggle Channel Card", channel.id);
+                      handleToggleChannel(channel);
+                    }}
                     className={`group border p-4 rounded-lg flex flex-col gap-3 transition-all relative cursor-pointer ${
                       channel.is_active
                         ? 'border-primary-container bg-surface-container-low hover:shadow-md'
@@ -398,7 +417,10 @@ export const Communication = () => {
               <div className="p-margin-md border-b border-border-subtle flex justify-between items-center bg-surface-container-low">
                 <h3 className="font-headline-sm text-headline-sm">Escalation Matrix</h3>
                 <button
-                  onClick={() => setShowEscalationModal(true)}
+                  onClick={() => {
+                    console.log("Clicked: Configure Escalation Rules Button");
+                    setShowEscalationModal(true);
+                  }}
                   className="text-primary text-label-md font-bold flex items-center gap-1 hover:underline"
                 >
                   <Icon name="edit" size={16} /> Configure Rules
@@ -493,7 +515,10 @@ export const Communication = () => {
                   </div>
                 ))}
                 <button
-                  onClick={() => setShowMeetingModal(true)}
+                  onClick={() => {
+                    console.log("Clicked: Add Recurrent Sync Button");
+                    setShowMeetingModal(true);
+                  }}
                   className="w-full border-2 border-dashed border-outline-variant py-2 rounded-lg text-label-md font-bold text-outline hover:border-primary hover:text-primary transition-all"
                 >
                   Add Recurrent Sync
@@ -507,6 +532,7 @@ export const Communication = () => {
                 <h3 className="font-headline-sm text-headline-sm">Stakeholders</h3>
                 <button
                   onClick={() => {
+                    console.log("Clicked: Add Stakeholder Button");
                     setSelectedStakeholder(null)
                     setShName('')
                     setShRole('')
@@ -542,9 +568,12 @@ export const Communication = () => {
                         )}
                       </div>
                     </div>
-                    <div className="relative">
+                    <div className="relative stakeholder-row-menu">
                       <button
-                        onClick={() => setActiveStakeholderMenu(activeStakeholderMenu === stakeholder.id ? null : stakeholder.id)}
+                        onClick={() => {
+                          console.log("Clicked: Stakeholder Action Menu Toggle", stakeholder.id);
+                          setActiveStakeholderMenu(activeStakeholderMenu === stakeholder.id ? null : stakeholder.id)
+                        }}
                         className="opacity-0 group-hover:opacity-100 p-1 hover:bg-surface-container rounded transition-all"
                       >
                         <Icon name="more_vert" size={18} className="text-outline" />
@@ -552,13 +581,20 @@ export const Communication = () => {
                       {activeStakeholderMenu === stakeholder.id && (
                         <div className="absolute right-0 mt-1 w-36 bg-white border border-border-subtle rounded-lg shadow-lg py-1 z-10">
                           <button
-                            onClick={() => handleOpenEditStakeholder(stakeholder)}
+                            onClick={() => {
+                              console.log("Clicked: Edit Stakeholder Action", stakeholder.id);
+                              handleOpenEditStakeholder(stakeholder);
+                            }}
                             className="w-full text-left px-3 py-1.5 text-label-md hover:bg-surface-container-low flex items-center gap-1.5 text-on-surface"
                           >
                             <Icon name="edit" size={14} /> Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteStakeholder(stakeholder.id)}
+                            onClick={() => {
+                              console.log("Clicked: Delete Stakeholder Action", stakeholder.id);
+                              handleDeleteStakeholder(stakeholder.id);
+                              setActiveStakeholderMenu(null);
+                            }}
                             className="w-full text-left px-3 py-1.5 text-label-md hover:bg-error-container/10 text-status-error flex items-center gap-1.5"
                           >
                             <Icon name="delete" size={14} /> Delete

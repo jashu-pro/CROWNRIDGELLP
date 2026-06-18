@@ -75,6 +75,7 @@ export const Preview = () => {
 
   const handleSendEmail = async (e) => {
     e.preventDefault()
+    console.log("Clicked: Submit Send Email Form")
     setEmailSending(true)
     try {
       await new Promise(r => setTimeout(r, 1000))
@@ -114,28 +115,43 @@ export const Preview = () => {
       {/* Header toolbar */}
       <div className="sticky top-16 z-40 bg-surface/80 backdrop-blur-md border-b border-border-subtle px-container-padding-desktop py-4 flex justify-between items-center no-print -mx-margin-md -mt-margin-md mb-margin-md">
         <div className="flex items-center gap-base">
-          <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-surface-container rounded-full">
+          <button
+            onClick={() => {
+              console.log("Clicked: Back to Dashboard Button")
+              navigate('/dashboard')
+            }}
+            className="p-2 hover:bg-surface-container rounded-full"
+          >
             <Icon name="arrow_back" size={24} />
           </button>
           <h1 className="font-headline-md text-headline-md text-on-surface">Preview: {project.project_name}</h1>
         </div>
         <div className="flex gap-margin-sm">
           <button
-            onClick={() => navigate('/projects/new')}
+            onClick={() => {
+              console.log("Clicked: Edit Project Kickoff Button")
+              navigate('/projects/new')
+            }}
             className="flex items-center gap-2 px-4 py-2 border border-border-subtle bg-surface hover:bg-surface-container rounded-lg font-label-md text-label-md transition-all bg-white"
           >
             <Icon name="edit" size={18} />
             Edit
           </button>
           <button
-            onClick={() => setShowEmailModal(true)}
+            onClick={() => {
+              console.log("Clicked: Open Send Email Modal Button")
+              setShowEmailModal(true)
+            }}
             className="flex items-center gap-2 px-4 py-2 border border-border-subtle bg-surface hover:bg-surface-container rounded-lg font-label-md text-label-md transition-all bg-white"
           >
             <Icon name="mail" size={18} />
             Send Email
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={() => {
+              console.log("Clicked: Export PDF Button")
+              window.print()
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary hover:opacity-90 active:scale-95 rounded-lg font-label-md text-label-md transition-all shadow-sm"
           >
             <Icon name="file_download" size={18} />
@@ -395,7 +411,13 @@ export const Preview = () => {
           <div className="bg-white rounded-xl shadow-xl border border-border-subtle w-full max-w-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-surface-muted/50">
               <h3 className="font-headline-sm text-headline-sm text-on-surface">Email Kickoff Package Recap</h3>
-              <button onClick={() => setShowEmailModal(false)} className="text-outline hover:text-on-surface p-1">
+              <button
+                onClick={() => {
+                  console.log("Clicked: Close Send Email Modal Button")
+                  setShowEmailModal(false)
+                }}
+                className="text-outline hover:text-on-surface p-1"
+              >
                 <Icon name="close" size={20} />
               </button>
             </div>
@@ -438,7 +460,10 @@ export const Preview = () => {
               <div className="pt-4 border-t border-border-subtle flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowEmailModal(false)}
+                  onClick={() => {
+                    console.log("Clicked: Cancel Send Email Modal Button")
+                    setShowEmailModal(false)
+                  }}
                   className="px-4 py-2 border border-border-subtle rounded-lg text-on-surface-variant"
                 >
                   Cancel

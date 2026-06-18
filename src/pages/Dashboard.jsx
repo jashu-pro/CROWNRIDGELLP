@@ -13,6 +13,8 @@ export const Dashboard = () => {
   
   const [allTasks, setAllTasks] = useState([])
   const [allMembers, setAllMembers] = useState([])
+  const [allMilestones, setAllMilestones] = useState([])
+  const [metricsLoading, setMetricsLoading] = useState(true)
   
   // Modals state
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
@@ -29,13 +31,20 @@ export const Dashboard = () => {
 
   // Fetch metrics data
   const fetchMetrics = async () => {
+    setMetricsLoading(true)
     try {
-      const tasksData = await db.tasks.list()
-      const membersData = await db.team_members.list()
+      const [tasksData, membersData, msData] = await Promise.all([
+        db.tasks.list(),
+        db.team_members.list(),
+        db.milestones.list()
+      ])
       setAllTasks(tasksData)
       setAllMembers(membersData)
+      setAllMilestones(msData)
     } catch (err) {
       console.error('Failed to load dashboard metrics:', err)
+    } finally {
+      setMetricsLoading(false)
     }
   }
 
@@ -54,28 +63,13 @@ export const Dashboard = () => {
   const activeProjectsCount = projects.filter((p) => p.status === 'active' || p.status === 'on_track').length
   const totalTeamMembers = Array.from(new Set(allMembers.map((m) => m.name))).length
   const completedTasksCount = allTasks.filter((t) => t.status === 'completed' || t.completed === true).length
-  
-  // Milestones count
-  const [allMilestones, setAllMilestones] = useState([])
-  useEffect(() => {
-    const fetchMilestones = async () => {
-      try {
-        const msData = await db.milestones.list()
-        setAllMilestones(msData)
-      } catch (e) {
-        console.error(e)
-      }
-    }
-    fetchMilestones()
-  }, [projects])
-  
   const upcomingMilestonesCount = allMilestones.filter((m) => m.status === 'scheduled' || m.status === 'in_progress').length
 
   const stats = [
-    { label: 'Active Projects', value: String(activeProjectsCount), icon: 'folder', trend: '+3' },
-    { label: 'Team Members', value: String(totalTeamMembers || 6), icon: 'groups', trend: '+2' },
-    { label: 'Tasks Completed', value: String(completedTasksCount || 156), icon: 'task_alt', trend: '+24' },
-    { label: 'Upcoming Milestones', value: String(upcomingMilestonesCount || 8), icon: 'flag', trend: '' },
+    { label: 'Active Projects', value: String(activeProjectsCount), icon: 'folder', trend: '+3', path: '/projects' },
+    { label: 'Team Members', value: String(totalTeamMembers || 6), icon: 'groups', trend: '+2', path: '/team' },
+    { label: 'Tasks Completed', value: String(completedTasksCount || 156), icon: 'task_alt', trend: '+24', path: '/tasks' },
+    { label: 'Upcoming Milestones', value: String(upcomingMilestonesCount || 8), icon: 'flag', trend: '', path: '/milestones' },
   ]
 
   // Compute progress for each project based on its tasks
@@ -114,6 +108,7 @@ export const Dashboard = () => {
   // Handle adding team member
   const handleAddMember = async (e) => {
     e.preventDefault()
+    console.log("Clicked: Submit Add Member Form")
     if (!newMemberName || !newMemberRole) {
       showToast('Name and Role are required', 'error')
       return
@@ -197,20 +192,51 @@ export const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-8">
-          {stats.map((stat, idx) => (
-            <div key={idx} className="bg-surface-base border border-border-subtle rounded-xl p-margin-md shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Icon name={stat.icon} size={20} className="text-primary" />
+          {metricsLoading
+            ? Array.from({ length: 4 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="bg-surface-base border border-border-subtle rounded-xl p-margin-md shadow-sm animate-pulse"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="w-5 h-5 bg-outline-variant/30 rounded-full" />
+                    </div>
+                    <div className="w-8 h-4 bg-outline-variant/20 rounded" />
+                  </div>
+                  <div className="w-16 h-8 bg-outline-variant/30 rounded mb-2" />
+                  <div className="w-24 h-4 bg-outline-variant/20 rounded" />
                 </div>
-                {stat.trend && (
-                  <span className="text-label-sm font-label-sm text-status-success">{stat.trend}</span>
-                )}
-              </div>
-              <p className="font-display-lg text-display-lg text-on-surface">{stat.value}</p>
-              <p className="text-label-md text-on-surface-variant">{stat.label}</p>
-            </div>
-          ))}
+              ))
+            : stats.map((stat, idx) => (
+                <div
+                  key={idx}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    console.log("Clicked: Stats Card", stat.label)
+                    navigate(stat.path)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate(stat.path)
+                    }
+                  }}
+                  className="bg-surface-base border border-border-subtle rounded-xl p-margin-md shadow-sm cursor-pointer hover:shadow-md hover:border-primary/40 hover:-translate-y-0.5 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Icon name={stat.icon} size={20} className="text-primary" />
+                    </div>
+                    {stat.trend && (
+                      <span className="text-label-sm font-label-sm text-status-success">{stat.trend}</span>
+                    )}
+                  </div>
+                  <p className="font-display-lg text-display-lg text-on-surface">{stat.value}</p>
+                  <p className="text-label-md text-on-surface-variant">{stat.label}</p>
+                </div>
+              ))}
         </div>
 
         {/* Main Content Split */}
@@ -230,6 +256,7 @@ export const Dashboard = () => {
                   <div
                     key={project.id || idx}
                     onClick={() => {
+                      console.log("Clicked: Project Card", project.project_name)
                       setProjectId(project.id)
                       showToast(`Active project switched to: ${project.project_name}`, 'success')
                     }}
@@ -284,21 +311,30 @@ export const Dashboard = () => {
               <h3 className="font-headline-sm text-headline-sm mb-4">Quick Actions</h3>
               <div className="space-y-3">
                 <button
-                  onClick={() => navigate('/projects/new')}
+                  onClick={() => {
+                    console.log("Clicked: Quick Action - New Project")
+                    navigate('/projects/new')
+                  }}
                   className="w-full flex items-center gap-3 p-3 bg-surface-container-low rounded-lg hover:bg-surface-container transition-colors text-left"
                 >
                   <Icon name="add_box" size={20} className="text-primary" />
                   <span className="font-body-md text-body-md text-on-surface font-semibold">New Project</span>
                 </button>
                 <button
-                  onClick={() => setShowAddMemberModal(true)}
+                  onClick={() => {
+                    console.log("Clicked: Quick Action - Add Team Member")
+                    setShowAddMemberModal(true)
+                  }}
                   className="w-full flex items-center gap-3 p-3 bg-surface-container-low rounded-lg hover:bg-surface-container transition-colors text-left"
                 >
                   <Icon name="person_add" size={20} className="text-primary" />
                   <span className="font-body-md text-body-md text-on-surface font-semibold">Add Team Member</span>
                 </button>
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => {
+                    console.log("Clicked: Quick Action - Generate Report")
+                    window.print()
+                  }}
                   className="w-full flex items-center gap-3 p-3 bg-surface-container-low rounded-lg hover:bg-surface-container transition-colors text-left"
                 >
                   <Icon name="description" size={20} className="text-primary" />
@@ -336,7 +372,10 @@ export const Dashboard = () => {
             <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-surface-muted/50">
               <h3 className="font-headline-sm text-headline-sm text-on-surface">Add Team Member</h3>
               <button
-                onClick={() => setShowAddMemberModal(false)}
+                onClick={() => {
+                  console.log("Clicked: Add Member Modal Close Button")
+                  setShowAddMemberModal(false)
+                }}
                 className="text-outline hover:text-on-surface p-1 rounded-full hover:bg-surface-container transition-colors"
               >
                 <Icon name="close" size={20} />
@@ -454,7 +493,10 @@ export const Dashboard = () => {
               <div className="pt-4 border-t border-border-subtle flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddMemberModal(false)}
+                  onClick={() => {
+                    console.log("Clicked: Add Member Modal Cancel Button")
+                    setShowAddMemberModal(false)
+                  }}
                   className="px-4 py-2 border border-border-subtle rounded-lg text-on-surface-variant font-label-md hover:bg-surface-container-low transition-all"
                 >
                   Cancel

@@ -10,6 +10,29 @@ export const TopNavbar = () => {
   const { showToast } = useToast()
   const navigate = useNavigate()
 
+  const [systemDateTime, setSystemDateTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSystemDateTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const currentTime = systemDateTime.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  })
+
+  const currentDate = systemDateTime.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
+
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [searchResults, setSearchResults] = useState({ projects: [], tasks: [], members: [] })
@@ -319,10 +342,17 @@ export const TopNavbar = () => {
 
       {/* Far Right Interactive Options */}
       <div className="flex items-center gap-2">
+        {/* System Date & Time Display */}
+        <div className="hidden md:flex flex-col items-end px-3 py-1 bg-slate-100 dark:bg-slate-800/40 rounded-lg border border-border-subtle dark:border-slate-850 mr-2 text-right shrink-0">
+          <span className="text-[11px] font-bold text-primary font-mono tracking-wide">{currentTime}</span>
+          <span className="text-[10px] text-outline font-medium">{currentDate}</span>
+        </div>
+
         {/* Notification Bell */}
         <div ref={notificationsRef} className="relative">
           <button
             onClick={() => {
+              console.log("Clicked: Notification Bell");
               setShowNotifications(!showNotifications)
               setShowSettings(false)
               setShowProfile(false)
@@ -342,6 +372,7 @@ export const TopNavbar = () => {
                 {unreadCount > 0 && (
                   <button
                     onClick={() => {
+                      console.log("Clicked: Mark all notifications as read");
                       setNotifications(notifications.map(n => ({ ...n, unread: false })))
                       showToast('All notifications marked as read', 'success')
                     }}
@@ -356,6 +387,7 @@ export const TopNavbar = () => {
                   <div
                     key={n.id}
                     onClick={() => {
+                      console.log("Clicked: Notification Item", n.id);
                       setNotifications(notifications.map(item => item.id === n.id ? { ...item, unread: false } : item))
                       showToast(`Opened alert: ${n.title}`, 'success')
                     }}
@@ -393,6 +425,7 @@ export const TopNavbar = () => {
         <div ref={settingsRef} className="relative">
           <button
             onClick={() => {
+              console.log("Clicked: Settings Cog");
               setShowSettings(!showSettings)
               setShowNotifications(false)
               setShowProfile(false)
@@ -444,7 +477,10 @@ export const TopNavbar = () => {
               {/* Reset Database */}
               <div className="pt-2 border-t border-border-subtle dark:border-slate-800">
                 <button
-                  onClick={handleResetData}
+                  onClick={() => {
+                    console.log("Clicked: Reset App Data");
+                    handleResetData();
+                  }}
                   className="w-full flex items-center justify-center gap-2 py-2 border border-status-error/30 text-status-error rounded-lg hover:bg-status-error/5 transition-all text-label-md font-semibold"
                 >
                   <Icon name="delete_forever" size={16} />
@@ -459,6 +495,7 @@ export const TopNavbar = () => {
         <div ref={profileRef} className="relative">
           <button
             onClick={() => {
+              console.log("Clicked: Profile Avatar");
               setShowProfile(!showProfile)
               setShowNotifications(false)
               setShowSettings(false)
@@ -497,6 +534,7 @@ export const TopNavbar = () => {
               <div className="border-t border-border-subtle dark:border-slate-800 pt-2 space-y-1">
                 <button
                   onClick={() => {
+                    console.log("Clicked: Profile My Dashboard");
                     setShowProfile(false)
                     navigate('/dashboard')
                     showToast('Navigated to profile dashboard', 'success')
@@ -509,6 +547,7 @@ export const TopNavbar = () => {
 
                 <button
                   onClick={async () => {
+                    console.log("Clicked: Profile Sign Out");
                     setShowProfile(false)
                     await logout()
                     showToast('Successfully signed out', 'success')

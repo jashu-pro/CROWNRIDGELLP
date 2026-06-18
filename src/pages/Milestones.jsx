@@ -6,7 +6,7 @@ import { useToast } from '../components/Toast'
 import { db } from '../lib/db'
 
 export const Milestones = () => {
-  const { projectId, project } = useProject()
+  const { projectId, project, refreshProjects } = useProject()
   const { showToast } = useToast()
 
   const [tasks, setTasks] = useState([])
@@ -68,6 +68,7 @@ export const Milestones = () => {
         completed: !task.completed,
         status: newStatus
       })
+      await refreshProjects()
       showToast(`Task marked as ${newStatus}`, 'success')
       fetchData()
     } catch (err) {
@@ -98,6 +99,7 @@ export const Milestones = () => {
         owner_avatar: '',
         completed: false
       })
+      await refreshProjects()
       showToast('Task added to checklist!', 'success')
       setShowAddTaskModal(false)
       setTaskTitle('')
@@ -120,6 +122,7 @@ export const Milestones = () => {
         ...project,
         notes: projectNote
       })
+      await refreshProjects()
       showToast('Project notes updated successfully!', 'success')
       setShowAddNoteModal(false)
     } catch (err) {
@@ -202,7 +205,10 @@ export const Milestones = () => {
               Share Report
             </button>
             <button
-              onClick={() => setShowAddTaskModal(true)}
+              onClick={() => {
+                console.log("Clicked: Add Task Button");
+                setShowAddTaskModal(true);
+              }}
               className="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg flex items-center gap-2 shadow-sm hover:opacity-90 active:scale-95 transition-all"
             >
               <Icon name="add" size={18} />
@@ -255,7 +261,7 @@ export const Milestones = () => {
               </div>
               <h3 className="font-label-sm text-label-sm opacity-80 uppercase">Target Date</h3>
               <p className="font-headline-sm text-headline-sm mt-1">
-                {project?.start_date ? new Date(project.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 24, 2024'}
+                {project?.start_date ? new Date(project.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 24, 2026'}
               </p>
               <p className="text-label-md font-label-md mt-2 opacity-70">Q4 Kickoff Goal</p>
             </div>
@@ -270,10 +276,22 @@ export const Milestones = () => {
                 Milestone Checklist
               </h3>
               <div className="flex items-center gap-2">
-                <button className="p-1 hover:bg-surface-container rounded transition-colors text-outline hover:text-on-surface">
+                <button
+                  onClick={() => {
+                    console.log("Clicked: Filter List Button")
+                    showToast("Filter options for the task checklist are not configured in mock mode", "info")
+                  }}
+                  className="p-1 hover:bg-surface-container rounded transition-colors text-outline hover:text-on-surface"
+                >
                   <Icon name="filter_list" size={20} />
                 </button>
-                <button className="p-1 hover:bg-surface-container rounded transition-colors text-outline hover:text-on-surface">
+                <button
+                  onClick={() => {
+                    console.log("Clicked: Milestone Checklist More Vert Menu")
+                    showToast("Actions menu under development", "info")
+                  }}
+                  className="p-1 hover:bg-surface-container rounded transition-colors text-outline hover:text-on-surface"
+                >
                   <Icon name="more_vert" size={20} />
                 </button>
               </div>
@@ -291,13 +309,19 @@ export const Milestones = () => {
                     <input
                       type="checkbox"
                       checked={task.completed || false}
-                      onChange={() => toggleTask(task)}
+                      onChange={() => {
+                        console.log("Clicked: Toggle Task Checkbox", task.id);
+                        toggleTask(task);
+                      }}
                       className="task-checkbox w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20 transition-all cursor-pointer accent-primary"
                     />
                   </div>
                   <div className="flex-grow">
                     <label
-                      onClick={() => toggleTask(task)}
+                      onClick={() => {
+                        console.log("Clicked: Toggle Task Label", task.id);
+                        toggleTask(task);
+                      }}
                       className={`font-body-md text-body-md text-on-surface cursor-pointer block ${
                         task.completed ? 'line-through text-on-surface-variant' : ''
                       }`}
@@ -330,7 +354,13 @@ export const Milestones = () => {
             </div>
 
             <div className="p-4 bg-surface-muted/30 text-center">
-              <button className="text-primary font-label-md text-label-md hover:underline font-semibold">
+              <button
+                onClick={() => {
+                  console.log("Clicked: View All Tasks Button")
+                  showToast("All tasks for the initiation phase are currently displayed", "success")
+                }}
+                className="text-primary font-label-md text-label-md hover:underline font-semibold"
+              >
                 View All {totalTasks} Tasks
               </button>
             </div>
@@ -394,14 +424,20 @@ export const Milestones = () => {
             {/* Note & Attach Buttons */}
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setShowAddNoteModal(true)}
+                onClick={() => {
+                  console.log("Clicked: View/Edit Notes Button");
+                  setShowAddNoteModal(true);
+                }}
                 className="p-3 bg-surface-base border border-border-subtle rounded-lg text-center hover:bg-surface-container-low transition-colors group bg-white"
               >
                 <Icon name="note_add" size={24} className="text-primary mb-1 block group-hover:scale-110 transition-transform mx-auto" />
                 <span className="text-label-sm font-label-sm text-on-surface font-semibold">View/Edit Notes</span>
               </button>
               <button
-                onClick={handleTriggerAttach}
+                onClick={() => {
+                  console.log("Clicked: Attach File Button");
+                  handleTriggerAttach();
+                }}
                 className="p-3 bg-surface-base border border-border-subtle rounded-lg text-center hover:bg-surface-container-low transition-colors group bg-white"
               >
                 <input
@@ -419,7 +455,7 @@ export const Milestones = () => {
       </div>
 
       <footer className="mt-auto p-margin-md border-t border-border-subtle bg-surface-base/50 text-center -mx-margin-md -mb-margin-md">
-        <p className="font-label-sm text-label-sm text-on-surface-variant">© 2024 KickoffGen Consultancy Suite • v2.4.1-Stable</p>
+        <p className="font-label-sm text-label-sm text-on-surface-variant">© 2026 KickoffGen Consultancy Suite • v2.4.1-Stable</p>
       </footer>
 
       {/* Add Task Modal */}
@@ -428,7 +464,10 @@ export const Milestones = () => {
           <div className="bg-white rounded-xl shadow-xl border border-border-subtle w-full max-w-md overflow-hidden">
             <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-surface-muted/50">
               <h3 className="font-headline-sm text-headline-sm text-on-surface">Add Task</h3>
-              <button onClick={() => setShowAddTaskModal(false)} className="text-outline hover:text-on-surface p-1">
+              <button onClick={() => {
+                console.log("Clicked: Close Add Task Modal");
+                setShowAddTaskModal(false);
+              }} className="text-outline hover:text-on-surface p-1">
                 <Icon name="close" size={20} />
               </button>
             </div>
@@ -493,7 +532,10 @@ export const Milestones = () => {
               <div className="pt-4 border-t border-border-subtle flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddTaskModal(false)}
+                  onClick={() => {
+                    console.log("Clicked: Close Add Task Modal");
+                    setShowAddTaskModal(false);
+                  }}
                   className="px-4 py-2 border border-border-subtle rounded-lg text-on-surface-variant"
                 >
                   Cancel
@@ -517,7 +559,10 @@ export const Milestones = () => {
           <div className="bg-white rounded-xl shadow-xl border border-border-subtle w-full max-w-md overflow-hidden">
             <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-surface-muted/50">
               <h3 className="font-headline-sm text-headline-sm text-on-surface">Project Notes</h3>
-              <button onClick={() => setShowAddNoteModal(false)} className="text-outline hover:text-on-surface p-1">
+              <button onClick={() => {
+                console.log("Clicked: Close Notes Modal");
+                setShowAddNoteModal(false);
+              }} className="text-outline hover:text-on-surface p-1">
                 <Icon name="close" size={20} />
               </button>
             </div>
@@ -537,7 +582,10 @@ export const Milestones = () => {
               <div className="pt-4 border-t border-border-subtle flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddNoteModal(false)}
+                  onClick={() => {
+                    console.log("Clicked: Close Notes Modal");
+                    setShowAddNoteModal(false);
+                  }}
                   className="px-4 py-2 border border-border-subtle rounded-lg text-on-surface-variant"
                 >
                   Cancel

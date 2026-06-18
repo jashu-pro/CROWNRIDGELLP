@@ -16,10 +16,12 @@ function App() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/projects/new" element={<ProjectCreation />} />
+      <Route path="/projects" element={<Management />} />
       <Route path="/credentials" element={<Credentials />} />
       <Route path="/communication" element={<Communication />} />
       <Route path="/timeline" element={<Timeline />} />
       <Route path="/team" element={<Team />} />
+      <Route path="/tasks" element={<Milestones />} />
       <Route path="/milestones" element={<Milestones />} />
       <Route path="/preview" element={<Preview />} />
       <Route path="/management" element={<Management />} />

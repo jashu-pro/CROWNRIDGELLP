@@ -105,7 +105,10 @@ export const Team = () => {
             <p className="text-body-lg text-on-surface-variant">Meet the consultants driving your project forward.</p>
           </div>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              console.log("Clicked: Add Member Button");
+              setShowAddModal(true);
+            }}
             className="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-all shadow-sm"
           >
             <Icon name="person_add" size={18} />
@@ -146,7 +149,10 @@ export const Team = () => {
                     </a>
                   )}
                   <button
-                    onClick={() => handleDeleteMember(member.id, member.name)}
+                    onClick={() => {
+                      console.log("Clicked: Delete Member Action", member.id);
+                      handleDeleteMember(member.id, member.name);
+                    }}
                     className="p-1 hover:bg-error-container/10 rounded-full text-outline hover:text-status-error opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Icon name="delete" size={18} />
@@ -203,7 +209,10 @@ export const Team = () => {
           <div className="bg-white rounded-xl shadow-xl border border-border-subtle w-full max-w-md overflow-hidden">
             <div className="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-surface-muted/50">
               <h3 className="font-headline-sm text-headline-sm text-on-surface">Add Team Member</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-outline hover:text-on-surface p-1">
+              <button onClick={() => {
+                console.log("Clicked: Close Add Member Modal");
+                setShowAddModal(false);
+              }} className="text-outline hover:text-on-surface p-1">
                 <Icon name="close" size={20} />
               </button>
             </div>
@@ -296,7 +305,10 @@ export const Team = () => {
               <div className="pt-4 border-t border-border-subtle flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    console.log("Clicked: Close Add Member Modal");
+                    setShowAddModal(false);
+                  }}
                   className="px-4 py-2 border border-border-subtle rounded-lg text-on-surface-variant"
                 >
                   Cancel
