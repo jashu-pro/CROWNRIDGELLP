@@ -64,11 +64,14 @@ export const Login = () => {
       } else {
         // Mock LocalStorage Fallback Authentication
         const users = JSON.parse(localStorage.getItem('ko_mock_users') || '[]')
-        // Ensure default admin user is registered in mock list if empty
-        if (users.length === 0) {
+        // Ensure default users are registered in mock list
+        if (!users.find(u => u.email === 'admin@kickoff.com')) {
           users.push({ email: 'admin@kickoff.com', password: 'password' })
-          localStorage.setItem('ko_mock_users', JSON.stringify(users))
         }
+        if (!users.find(u => u.email === 'jaswanthmajji43@gmail.com')) {
+          users.push({ email: 'jaswanthmajji43@gmail.com', password: 'jaswanth' })
+        }
+        localStorage.setItem('ko_mock_users', JSON.stringify(users))
 
         const user = users.find((u) => u.email === email && u.password === password)
         if (!user && !(email === 'admin@kickoff.com' && password === 'password')) {

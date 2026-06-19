@@ -4,147 +4,37 @@ import { Icon } from './Icon'
 import { useProject } from '../context/ProjectContext'
 import { useToast } from './Toast'
 import { db } from '../lib/db'
+import { supabase } from '../lib/supabase'
 
-// Smart Notification Generator relative to June 18, 2026
-const generateSmartNotifications = (projectsList, milestonesList, membersList, tasksList) => {
-  const systemDate = new Date('2026-06-18')
-  const list = []
-  let idCounter = 1
+const formatRelativeTime = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffMin = Math.floor(diffSec / 60)
+  const diffHour = Math.floor(diffMin / 60)
+  const diffDays = Math.floor(diffHour / 24)
 
-  // 1. Check projects
-  projectsList.forEach((p) => {
-    if (p.end_date && p.status !== 'completed') {
-      const endDate = new Date(p.end_date)
-      const diffTime = endDate.getTime() - systemDate.getTime()
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  if (diffSec < 60) return 'Just now'
+  if (diffMin < 60) return `${diffMin}m ago`
+  if (diffHour < 24) return `${diffHour}h ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
 
-      if (diffDays > 0 && diffDays <= 7) {
-        list.push({
-          id: `p-due-${p.id}-${idCounter++}`,
-          title: 'Project Deadline Approaching',
-          desc: `Project Alpha deadline in 2 days`, // Consistent with example but template-based when possible
-          time: `${diffDays}d left`,
-          unread: true,
-          type: 'deadline'
-        })
-      } else if (diffDays < 0 && diffDays >= -30) {
-        const overdueDays = Math.abs(diffDays)
-        list.push({
-          id: `p-overdue-${p.id}-${idCounter++}`,
-          title: 'Project Overdue',
-          desc: `Data Analytics project overdue by 1 day`,
-          time: `${overdueDays}d overdue`,
-          unread: true,
-          type: 'overdue'
-        })
-      }
-    }
-  })
-
-  // 2. Check Milestones
-  milestonesList.forEach((ms) => {
-    let msEndDate = null
-    if (ms.end_date) {
-      msEndDate = new Date(ms.end_date)
-    } else if (ms.dates && ms.dates.includes('—')) {
-      const parts = ms.dates.split('—')
-      if (parts[1]) {
-        const cleanedDateStr = parts[1].trim()
-        const yearMatch = cleanedDateStr.match(/\d{4}/)
-        let dateToParse = cleanedDateStr
-        if (!yearMatch && ms.dates.includes('2026')) {
-          dateToParse = `${cleanedDateStr}, 2026`
-        }
-        const parsed = Date.parse(dateToParse)
-        if (!isNaN(parsed)) {
-          msEndDate = new Date(parsed)
-        }
-      }
-    }
-
-    if (msEndDate && ms.status !== 'completed') {
-      const diffTime = msEndDate.getTime() - systemDate.getTime()
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-      if (diffDays === 1) {
-        list.push({
-          id: `ms-due-${ms.id}-${idCounter++}`,
-          title: 'Milestone Due Tomorrow',
-          desc: `Cloud Migration milestone due tomorrow`,
-          time: 'Due tomorrow',
-          unread: true,
-          type: 'milestone'
-        })
-      }
-    }
-  })
-
-  // 3. New team members
-  membersList.forEach((m) => {
-    const p = projectsList.find(proj => proj.id === m.project_id)
-    const projName = p ? p.project_name : 'the project'
-    if (m.name === 'Elena Rodriguez' || m.id.startsWith('new-')) {
-      list.push({
-        id: `member-${m.id}-${idCounter++}`,
-        title: 'New Team Member Added',
-        desc: `${m.name} was added to ${projName}.`,
-        time: '1h ago',
-        unread: true,
-        type: 'member'
-      })
-    }
-  })
-
-  // Ensure standard SaaS demo examples are populated in order to hit requirements:
-  const hasAlpha = list.some(n => n.desc.includes('Project Alpha'))
-  if (!hasAlpha) {
-    list.push({
-      id: `seed-1-${idCounter++}`,
-      title: 'Project Deadline Approaching',
-      desc: 'Project Alpha deadline in 2 days',
-      time: '2d left',
-      unread: true,
-      type: 'deadline'
-    })
+const getTypeColor = (type) => {
+  switch (type) {
+    case 'overdue':
+      return { border: 'border-l-status-error', badge: 'bg-status-error/10 text-status-error' }
+    case 'due_soon':
+      return { border: 'border-l-status-warning', badge: 'bg-status-warning/10 text-status-warning' }
+    case 'completed':
+      return { border: 'border-l-status-success', badge: 'bg-status-success/10 text-status-success' }
+    default:
+      return { border: 'border-l-primary', badge: 'bg-primary/10 text-primary' }
   }
-
-  const hasCloudMig = list.some(n => n.desc.includes('Cloud Migration'))
-  if (!hasCloudMig) {
-    list.push({
-      id: `seed-2-${idCounter++}`,
-      title: 'Milestone Due Tomorrow',
-      desc: 'Cloud Migration milestone due tomorrow',
-      time: 'Due tomorrow',
-      unread: true,
-      type: 'milestone'
-    })
-  }
-
-  const hasDataAnalytics = list.some(n => n.desc.includes('Data Analytics'))
-  if (!hasDataAnalytics) {
-    list.push({
-      id: `seed-3-${idCounter++}`,
-      title: 'Project Overdue',
-      desc: 'Data Analytics project overdue by 1 day',
-      time: '1d overdue',
-      unread: true,
-      type: 'overdue'
-    })
-  }
-
-  const hasNewMember = list.some(n => n.desc.includes('Elena Rodriguez'))
-  if (!hasNewMember) {
-    list.push({
-      id: `seed-4-${idCounter++}`,
-      title: 'New Team Member Added',
-      desc: 'Elena Rodriguez was added to Cloud Infrastructure Migration',
-      time: '10m ago',
-      unread: true,
-      type: 'member'
-    })
-  }
-
-  return list
 }
 
 export const TopNavbar = () => {
@@ -223,7 +113,11 @@ export const TopNavbar = () => {
 
   // Notifications State
   const [notifications, setNotifications] = useState([])
-  const unreadCount = notifications.filter((n) => n.unread).length
+  const [activeFilter, setActiveFilter] = useState('all')
+  const [notificationsPage, setNotificationsPage] = useState(1)
+  const [totalNotificationsCount, setTotalNotificationsCount] = useState(0)
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(() => parseInt(localStorage.getItem('unread_notifications_count') || '0'))
 
   // Project Stats state
   const [activeProjectStats, setActiveProjectStats] = useState({
@@ -256,24 +150,195 @@ export const TopNavbar = () => {
     fetchStats()
   }, [project])
 
-  // Load and generate smart notifications
-  useEffect(() => {
-    const fetchNotifications = async () => {
+  // Sync unread count helper with table existence fallback
+  const syncUnreadCount = async () => {
+    let unreadTotal = 0
+    if (db.isSupabase && supabase) {
       try {
-        const [projList, msList, memList, tList] = await Promise.all([
-          db.projects.list(),
-          db.milestones.list(),
-          db.team_members.list(),
-          db.tasks.list()
-        ])
-        const list = generateSmartNotifications(projList, msList, memList, tList)
-        setNotifications(list)
+        const { count, error } = await supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('is_read', false)
+        if (error) throw error
+        unreadTotal = count || 0
       } catch (err) {
-        console.error('Failed to load notification assets:', err)
+        if (err.code === '42P01' || err.message?.includes('relation "public.notifications" does not exist') || err.message?.includes('does not exist')) {
+          const list = await db.notifications.list('unread')
+          unreadTotal = list ? list.count : 0
+        } else {
+          console.error('Failed to sync unread count:', err)
+        }
       }
+    } else {
+      const list = await db.notifications.list('unread')
+      unreadTotal = list ? list.count : 0
     }
-    fetchNotifications()
-  }, [projects])
+    setUnreadCount(unreadTotal)
+    localStorage.setItem('unread_notifications_count', String(unreadTotal))
+  }
+
+  // Fetch notifications list
+  const fetchNotificationsData = async (page = 1, append = false) => {
+    try {
+      setLoadingNotifications(true)
+      const res = await db.notifications.list(activeFilter, page, 20)
+      if (append) {
+        setNotifications(prev => {
+          const existingIds = new Set(prev.map(n => n.id))
+          const filteredNew = res.data.filter(n => !existingIds.has(n.id))
+          return [...prev, ...filteredNew]
+        })
+      } else {
+        setNotifications(res.data)
+      }
+      setTotalNotificationsCount(res.count)
+      
+      // Update unread count
+      await syncUnreadCount()
+    } catch (err) {
+      console.error('Failed to load notifications:', err)
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }
+
+  // Load notifications and run daily checks once on app load
+  useEffect(() => {
+    const initNotifications = async () => {
+      try {
+        await db.notifications.runDailyChecks(project?.id)
+      } catch (err) {
+        console.error('Daily notifications sync warning:', err)
+      }
+      await fetchNotificationsData(1, false)
+    }
+    initNotifications()
+  }, [project, activeFilter])
+
+  // Realtime subscription setup
+  useEffect(() => {
+    if (!db.isSupabase || !supabase) return
+
+    const channel = supabase
+      .channel('notifications-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications' },
+        (payload) => {
+          console.log('Realtime notification payload:', payload)
+          if (payload.eventType === 'INSERT') {
+            const newNotif = payload.new
+            setNotifications(prev => {
+              if (activeFilter === 'unread' && newNotif.is_read) return prev
+              if (activeFilter === 'high_priority' && newNotif.priority !== 'high') return prev
+              if (['project', 'task', 'milestone', 'team'].includes(activeFilter) && newNotif.category !== activeFilter) return prev
+              
+              const exists = prev.some(n => n.id === newNotif.id)
+              if (exists) return prev
+              return [newNotif, ...prev]
+            })
+            
+            if (!newNotif.is_read) {
+              setUnreadCount(prev => {
+                const next = prev + 1
+                localStorage.setItem('unread_notifications_count', String(next))
+                return next
+              })
+              showToast(`New Notification: ${newNotif.title}`, 'info')
+            }
+            setTotalNotificationsCount(prev => prev + 1)
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedNotif = payload.new
+            setNotifications(prev => prev.map(n => n.id === updatedNotif.id ? updatedNotif : n))
+            
+            syncUnreadCount()
+          } else if (payload.eventType === 'DELETE') {
+            setNotifications(prev => prev.filter(n => n.id !== payload.old.id))
+            setTotalNotificationsCount(prev => Math.max(0, prev - 1))
+            
+            syncUnreadCount()
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [activeFilter])
+
+  // Notification navigation helper
+  const handleNotificationClick = async (notif) => {
+    try {
+      await db.notifications.markAsRead(notif.id)
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    } catch (e) {
+      console.error(e)
+    }
+
+    if (notif.category === 'project') {
+      if (notif.related_id) setProjectId(notif.related_id)
+      navigate('/dashboard')
+    } else if (notif.category === 'task') {
+      if (notif.related_id) {
+        try {
+          let projId = project?.id
+          if (db.isSupabase) {
+            const { data } = await supabase.from('tasks').select('project_id').eq('id', notif.related_id).single()
+            if (data) projId = data.project_id
+          } else {
+            const list = await db.tasks.list()
+            const t = list.find(task => task.id === notif.related_id)
+            if (t) projId = t.project_id
+          }
+          if (projId) setProjectId(projId)
+        } catch(e) {}
+      }
+      navigate('/milestones')
+    } else if (notif.category === 'milestone') {
+      if (notif.related_id) {
+        try {
+          let projId = project?.id
+          if (db.isSupabase) {
+            const { data } = await supabase.from('milestones').select('project_id').eq('id', notif.related_id).single()
+            if (data) projId = data.project_id
+          } else {
+            const list = await db.milestones.list()
+            const m = list.find(ms => ms.id === notif.related_id)
+            if (m) projId = m.project_id
+          }
+          if (projId) setProjectId(projId)
+        } catch(e) {}
+      }
+      navigate('/timeline')
+    } else if (notif.category === 'team') {
+      if (notif.related_id) {
+        try {
+          let projId = project?.id
+          if (db.isSupabase) {
+            const { data: p } = await supabase.from('projects').select('id').eq('id', notif.related_id).single()
+            if (p) {
+              projId = p.id
+            } else {
+              const { data: tm } = await supabase.from('team_members').select('project_id').eq('id', notif.related_id).single()
+              if (tm) projId = tm.project_id
+            }
+          } else {
+            const pList = await db.projects.list()
+            const p = pList.find(proj => proj.id === notif.related_id)
+            if (p) {
+              projId = p.id
+            } else {
+              const mList = await db.team_members.list()
+              const m = mList.find(mem => mem.id === notif.related_id)
+              if (m) projId = m.project_id
+            }
+          }
+          if (projId) setProjectId(projId)
+        } catch(e) {}
+      }
+      navigate('/team')
+    }
+    setShowNotifications(false)
+  }
 
   // Click outside handler
   useEffect(() => {
@@ -398,7 +463,7 @@ export const TopNavbar = () => {
   }
 
   return (
-    <header className="h-16 bg-surface border-b border-border-subtle shadow-sm flex justify-between items-center px-container-padding-desktop sticky top-0 z-40">
+    <header className="h-16 bg-surface border-b border-border-subtle shadow-sm flex justify-between items-center px-container-padding-desktop sticky top-0 z-50">
       {/* Brand Logo */}
       <div className="flex items-center gap-3">
         <Link to="/dashboard" className="text-headline-sm font-headline-sm font-bold text-primary hover:opacity-90 transition-opacity">
@@ -618,14 +683,22 @@ export const TopNavbar = () => {
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden">
+            <div className="absolute right-0 mt-2 w-[340px] bg-white dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="px-4 py-3 border-b border-border-subtle dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
                 <span className="font-semibold text-body-md text-on-surface">Smart Notifications</span>
                 {unreadCount > 0 && (
                   <button
-                    onClick={() => {
-                      setNotifications(notifications.map(n => ({ ...n, unread: false })))
-                      showToast('All notifications marked as read', 'success')
+                    onClick={async (e) => {
+                      e.stopPropagation()
+                      try {
+                        await db.notifications.markAllAsRead()
+                        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+                        setUnreadCount(0)
+                        localStorage.setItem('unread_notifications_count', '0')
+                        showToast('All notifications marked as read', 'success')
+                      } catch (err) {
+                        showToast('Failed to mark all as read', 'error')
+                      }
                     }}
                     className="text-[11px] text-primary hover:underline font-semibold"
                   >
@@ -633,34 +706,113 @@ export const TopNavbar = () => {
                   </button>
                 )}
               </div>
-              <div className="divide-y divide-border-subtle dark:divide-slate-800 max-h-72 overflow-y-auto custom-scrollbar">
-                {notifications.length > 0 ? (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      onClick={() => {
-                        setNotifications(notifications.map(item => item.id === n.id ? { ...item, unread: false } : item))
-                        showToast(`Opened: ${n.title}`, 'success')
-                      }}
-                      className={`p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer flex gap-3 ${
-                        n.unread ? 'bg-primary/5' : ''
-                      }`}
-                    >
-                      <div className="mt-0.5">
-                        <span className={`w-2 h-2 rounded-full inline-block ${n.unread ? 'bg-primary' : 'bg-transparent'}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-body-md font-medium text-on-surface flex items-center justify-between">
-                          <span>{n.title}</span>
-                          <span className="text-[10px] text-outline font-normal shrink-0">{n.time}</span>
+
+              {/* Filters Horizontal Bar */}
+              <div className="flex gap-1.5 px-3 py-2 overflow-x-auto scroll-hide border-b border-border-subtle dark:border-slate-800 bg-slate-50/20 dark:bg-slate-800/10">
+                {[
+                  { value: 'all', label: 'All' },
+                  { value: 'unread', label: 'Unread' },
+                  { value: 'high_priority', label: 'Priority' },
+                  { value: 'project', label: 'Projects' },
+                  { value: 'task', label: 'Tasks' },
+                  { value: 'milestone', label: 'Milestones' }
+                ].map(f => (
+                  <button
+                    key={f.value}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setActiveFilter(f.value)
+                      setNotificationsPage(1)
+                    }}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap transition-all ${
+                      activeFilter === f.value
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'bg-white dark:bg-slate-800 text-on-surface-variant hover:bg-slate-100 dark:hover:bg-slate-700 border border-border-subtle dark:border-slate-700'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="divide-y divide-border-subtle dark:divide-slate-800 max-h-80 overflow-y-auto custom-scrollbar">
+                {loadingNotifications && notifications.length === 0 ? (
+                  <div className="p-8 text-center flex justify-center items-center">
+                    <Icon name="sync" size={24} className="animate-spin text-primary" />
+                  </div>
+                ) : notifications.length > 0 ? (
+                  <>
+                    {notifications.map((n) => {
+                      const colors = getTypeColor(n.type)
+                      return (
+                        <div
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          className={`p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer flex gap-3 border-l-4 ${colors.border} ${
+                            !n.is_read ? 'bg-primary/5 dark:bg-primary/5' : ''
+                          }`}
+                        >
+                          <div className="mt-0.5">
+                            <span className={`w-2 h-2 rounded-full inline-block ${!n.is_read ? 'bg-primary' : 'bg-transparent'}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-body-md font-semibold text-on-surface flex items-center justify-between gap-2">
+                              <span className="truncate">{n.title}</span>
+                              <span className="text-[10px] text-outline font-normal shrink-0">{formatRelativeTime(n.created_at)}</span>
+                            </div>
+                            <div className="text-label-md text-outline mt-1 whitespace-pre-wrap leading-relaxed">{n.message}</div>
+                          </div>
+                          
+                          <div className="self-center shrink-0">
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                try {
+                                  await db.notifications.delete(n.id)
+                                  setNotifications(prev => prev.filter(item => item.id !== n.id))
+                                  setTotalNotificationsCount(prev => Math.max(0, prev - 1))
+                                  if (!n.is_read) {
+                                    setUnreadCount(prev => {
+                                      const next = Math.max(0, prev - 1)
+                                      localStorage.setItem('unread_notifications_count', String(next))
+                                      return next
+                                    })
+                                  }
+                                  showToast('Notification deleted', 'success')
+                                } catch (err) {
+                                  showToast('Failed to delete notification', 'error')
+                                }
+                              }}
+                              className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-outline hover:text-status-error transition-colors"
+                              title="Delete notification"
+                            >
+                              <Icon name="delete" size={16} />
+                            </button>
+                          </div>
                         </div>
-                        <div className="text-label-md text-outline mt-0.5">{n.desc}</div>
+                      )
+                    })}
+                    
+                    {notifications.length < totalNotificationsCount && (
+                      <div className="p-2.5 text-center bg-slate-50/50 dark:bg-slate-800/10 border-t border-border-subtle dark:border-slate-800">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const nextPage = notificationsPage + 1
+                            setNotificationsPage(nextPage)
+                            fetchNotificationsData(nextPage, true)
+                          }}
+                          className="text-xs text-primary hover:underline font-bold"
+                        >
+                          Load older notifications
+                        </button>
                       </div>
-                    </div>
-                  ))
+                    )}
+                  </>
                 ) : (
-                  <div className="p-6 text-center text-outline text-body-md">
-                    No active notifications
+                  <div className="p-8 text-center text-outline text-body-md flex flex-col items-center justify-center gap-2">
+                    <Icon name="notifications_off" size={32} className="opacity-40" />
+                    <span>No new notifications</span>
                   </div>
                 )}
               </div>
@@ -933,6 +1085,16 @@ export const TopNavbar = () => {
                         className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 text-on-surface rounded-xl px-4 py-2.5 text-body-md"
                       >
                         <option value="English">English</option>
+                        <option value="Hindi">हिन्दी (Hindi)</option>
+                        <option value="Bengali">বাংলা (Bengali)</option>
+                        <option value="Marathi">मराठी (Marathi)</option>
+                        <option value="Telugu">తెలుగు (Telugu)</option>
+                        <option value="Tamil">தமிழ் (Tamil)</option>
+                        <option value="Gujarati">ગુજરાતી (Gujarati)</option>
+                        <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
+                        <option value="Malayalam">മലയാളം (Malayalam)</option>
+                        <option value="Punjabi">ਪੰਜਾਬੀ (Punjabi)</option>
+                        <option value="Urdu">اردو (Urdu)</option>
                         <option value="Spanish">Español (Spanish)</option>
                         <option value="French">Français (French)</option>
                         <option value="German">Deutsch (German)</option>

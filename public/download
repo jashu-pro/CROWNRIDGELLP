@@ -247,10 +247,10 @@
 <input class="w-full bg-surface-base border border-border-subtle rounded-lg px-3 py-2 font-body-md text-body-md placeholder:text-outline-variant" id="project-type" placeholder="Cloud Transformation" type="text"/>
 </div>
 <div class="space-y-1">
-<label class="font-label-md text-label-md text-on-surface-variant" for="contract-value">Contract Value ($)</label>
+<label class="font-label-md text-label-md text-on-surface-variant" for="contract-value">Contract Value (₹)</label>
 <div class="relative">
-<span class="absolute left-3 top-2 text-outline-variant font-body-md">$</span>
-<input class="w-full bg-surface-base border border-border-subtle rounded-lg pl-8 pr-3 py-2 font-body-md text-body-md placeholder:text-outline-variant" id="contract-value" placeholder="125,000" type="number"/>
+<span class="absolute left-3 top-2 text-outline-variant font-body-md">₹</span>
+<input class="w-full bg-surface-base border border-border-subtle rounded-lg pl-8 pr-3 py-2 font-body-md text-body-md placeholder:text-outline-variant" id="contract-value" placeholder="1,25,000" type="number"/>
 </div>
 </div>
 </div>

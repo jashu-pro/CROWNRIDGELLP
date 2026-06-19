@@ -252,14 +252,14 @@ export const ProjectCreation = () => {
               </div>
               <div className="space-y-1">
                 <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="contract-value">
-                  Contract Value ($)
+                  Contract Value (₹)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2 text-outline-variant font-body-md">$</span>
+                  <span className="absolute left-3 top-2 text-outline-variant font-body-md">₹</span>
                   <input
                     id="contract-value"
                     type="number"
-                    placeholder="125,000"
+                    placeholder="1,25,000"
                     className="w-full bg-surface-base border border-border-subtle rounded-lg pl-8 pr-3 py-2 font-body-md text-body-md placeholder:text-outline-variant"
                     value={formData.contractValue}
                     onChange={(e) => setFormData({ ...formData, contractValue: e.target.value })}

@@ -27,16 +27,7 @@ function App() {
       <Route path="/milestones" element={<Milestones />} />
       <Route path="/preview" element={<Preview />} />
       <Route path="/management" element={<Management />} />
-      <Route path="/help" element={
-        <Layout>
-          <div className="max-w-4xl mx-auto">
-            <h2 className="font-headline-md text-headline-md text-on-surface mb-4">Help Center</h2>
-            <p className="text-body-lg text-on-surface-variant">
-              Welcome to the KickoffGen Help Center. Here you can find documentation, tutorials, and support resources.
-            </p>
-          </div>
-        </Layout>
-      } />
+
     </Routes>
   )
 }

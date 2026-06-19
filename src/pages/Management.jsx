@@ -304,7 +304,7 @@ export const Management = () => {
                       </td>
                       <td className="px-6 py-5">
                         <p className="font-body-md text-on-surface">
-                          ${(project.contract_value || 0).toLocaleString()}
+                          ₹{(project.contract_value || 0).toLocaleString()}
                         </p>
                       </td>
                       <td className="px-6 py-5">
@@ -449,9 +449,9 @@ export const Management = () => {
                     onChange={(e) => setProjectType(e.target.value)}
                   />
                 </div>
-                <div className="space-y-1">
+                 <div className="space-y-1">
                   <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="e-val">
-                    Contract Value ($)
+                    Contract Value (₹)
                   </label>
                   <input
                     id="e-val"

@@ -36,7 +36,13 @@ export const Timeline = () => {
       setLoading(true)
       const msData = await db.milestones.list(projectId)
       const tasksData = await db.tasks.list(projectId)
-      setMilestones(msData)
+      // Sort milestones chronologically by start_date
+      const sortedMs = [...msData].sort((a, b) => {
+        if (!a.start_date) return 1
+        if (!b.start_date) return -1
+        return a.start_date.localeCompare(b.start_date)
+      })
+      setMilestones(sortedMs)
       setTasks(tasksData)
     } catch (e) {
       console.error(e)
@@ -116,13 +122,13 @@ export const Timeline = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed':
-        return { border: 'border-status-success', bg: 'bg-status-success', text: 'text-status-success' }
+        return { border: 'border-status-success/60', bg: 'bg-status-success/10', text: 'text-status-success' }
       case 'delayed':
-        return { border: 'border-status-error', bg: 'bg-status-error', text: 'text-status-error' }
+        return { border: 'border-status-error/60', bg: 'bg-status-error/10', text: 'text-status-error' }
       case 'in_progress':
-        return { border: 'border-primary', bg: 'bg-primary', text: 'text-primary' }
+        return { border: 'border-primary/60', bg: 'bg-primary/10', text: 'text-primary' }
       default:
-        return { border: 'border-outline-variant', bg: 'bg-surface-container', text: 'text-outline' }
+        return { border: 'border-indigo-400/60', bg: 'bg-indigo-50/60', text: 'text-indigo-600' }
     }
   }
 
@@ -135,7 +141,7 @@ export const Timeline = () => {
       case 'in_progress':
         return 'bg-primary'
       default:
-        return 'bg-surface-container'
+        return 'bg-indigo-400'
     }
   }
 
@@ -198,27 +204,25 @@ export const Timeline = () => {
               return (
                 <div
                   key={milestone.id}
-                onClick={() => {
-                  console.log("Clicked: Timeline Row / Milestone", milestone.id);
-                  handleOpenEdit(milestone);
-                }}
-                  className={`flex flex-col md:flex-row items-center md:justify-center group cursor-pointer ${
-                    isScheduled ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500' : ''
-                  }`}
+                  onClick={() => {
+                    console.log("Clicked: Timeline Row / Milestone", milestone.id);
+                    handleOpenEdit(milestone);
+                  }}
+                  className={`flex flex-col ${isLeft ? 'md:flex-row' : 'md:flex-row-reverse'} items-center md:justify-center group cursor-pointer hover:scale-[1.01] transition-all duration-300`}
                 >
                   {isLeft ? (
                     <>
                       <div className="hidden md:block w-1/2 pr-12 text-right">
                         <span
-                          className={`inline-flex px-2 py-1 rounded ${
+                          className={`inline-flex px-2 py-0.5 rounded-full border ${
                             milestone.status === 'completed'
-                              ? 'bg-status-success/10 text-status-success'
+                              ? 'bg-status-success/10 text-status-success border-status-success/20'
                               : milestone.status === 'delayed'
-                                ? 'bg-status-error/10 text-status-error'
+                                ? 'bg-status-error/10 text-status-error border-status-error/20'
                                 : milestone.status === 'in_progress'
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'bg-surface-container-highest text-outline'
-                          } text-label-sm font-label-sm mb-2 uppercase`}
+                                  ? 'bg-primary/10 text-primary border-primary/20'
+                                  : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                          } text-label-sm font-label-sm mb-2 uppercase tracking-wide`}
                         >
                           {milestone.status.replace('_', ' ')}
                         </span>
@@ -227,8 +231,15 @@ export const Timeline = () => {
                       </div>
                       <div className="relative flex flex-col items-center">
                         <div
-                          className={`w-16 h-16 rounded-full bg-surface-base border-4 ${colors.border} shadow-lg flex items-center justify-center ${colors.text} group-hover:scale-110 transition-transform duration-300 ${milestone.status === 'in_progress' ? 'animate-pulse text-white' : ''}`}
-                          style={milestone.status === 'in_progress' ? { backgroundColor: '#004ac6' } : {}}
+                          className={`w-16 h-16 rounded-full border-4 ${colors.border} shadow-md flex items-center justify-center ${colors.text} group-hover:scale-115 group-hover:rotate-6 transition-all duration-300 ${
+                            milestone.status === 'in_progress'
+                              ? 'animate-pulse bg-primary text-white border-primary'
+                              : milestone.status === 'completed'
+                                ? 'bg-status-success/10 text-status-success border-status-success/40'
+                                : milestone.status === 'delayed'
+                                  ? 'bg-status-error/10 text-status-error border-status-error/40'
+                                  : 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                          }`}
                         >
                           <Icon
                             name={
@@ -238,17 +249,21 @@ export const Timeline = () => {
                                   ? 'warning'
                                   : milestone.status === 'in_progress'
                                     ? 'sync'
-                                    : 'science'
+                                    : 'calendar_today'
                             }
                             size={24}
                             filled={milestone.status === 'completed'}
                           />
                         </div>
                         <span
-                          className={`mt-4 font-label-md text-label-md ${
-                            milestone.status === 'in_progress'
-                              ? 'bg-primary-container text-on-primary-container'
-                              : 'bg-surface-container-highest'
+                          className={`mt-4 font-label-md text-label-md border ${
+                            milestone.status === 'completed'
+                              ? 'bg-status-success/10 text-status-success border-status-success/20'
+                              : milestone.status === 'delayed'
+                                ? 'bg-status-error/10 text-status-error border-status-error/20'
+                                : milestone.status === 'in_progress'
+                                  ? 'bg-primary text-white border-primary font-semibold'
+                                  : 'bg-slate-100 text-slate-600 border-slate-200'
                           } px-3 py-1 rounded-full whitespace-nowrap`}
                         >
                           {milestone.dates || 'TBD'}
@@ -257,15 +272,15 @@ export const Timeline = () => {
                       <div className="md:w-1/2 md:pl-12 mt-4 md:mt-0 w-full">
                         <div className="md:hidden">
                           <span
-                            className={`inline-flex px-2 py-1 rounded ${
+                            className={`inline-flex px-2 py-0.5 rounded-full border ${
                               milestone.status === 'completed'
-                                ? 'bg-status-success/10 text-status-success'
+                                ? 'bg-status-success/10 text-status-success border-status-success/20'
                                 : milestone.status === 'delayed'
-                                  ? 'bg-status-error/10 text-status-error'
+                                  ? 'bg-status-error/10 text-status-error border-status-error/20'
                                   : milestone.status === 'in_progress'
-                                    ? 'bg-primary/10 text-primary'
-                                    : 'bg-surface-container-highest text-outline'
-                            } text-label-sm font-label-sm mb-2 uppercase`}
+                                    ? 'bg-primary/10 text-primary border-primary/20'
+                                    : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                            } text-label-sm font-label-sm mb-2 uppercase tracking-wide`}
                           >
                             {milestone.status.replace('_', ' ')}
                           </span>
@@ -279,22 +294,32 @@ export const Timeline = () => {
                             console.log("Clicked: Milestone Card", milestone.id);
                             handleOpenEdit(milestone);
                           }}
-                          className={`bg-surface-container-lowest p-5 rounded-xl border shadow-sm group-hover:shadow-md transition-shadow cursor-pointer ${
+                          className={`bg-surface-container-lowest p-5 rounded-xl border shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300 cursor-pointer border-l-4 ${
                             milestone.status === 'in_progress'
-                              ? 'border-2 border-primary ring-4 ring-primary/5'
-                              : isScheduled
-                                ? 'border-border-subtle border-dashed'
-                                : 'border-border-subtle'
+                              ? 'border-primary ring-4 ring-primary/5 border-l-primary'
+                              : milestone.status === 'completed'
+                                ? 'border-border-subtle border-l-status-success'
+                                : milestone.status === 'delayed'
+                                  ? 'border-border-subtle border-l-status-error'
+                                  : 'border-border-subtle border-dashed border-l-indigo-400'
+                          } ${
+                            milestone.status === 'in_progress'
+                              ? 'bg-gradient-to-br from-white to-blue-50/10'
+                              : milestone.status === 'completed'
+                                ? 'bg-gradient-to-br from-white to-emerald-50/15'
+                                : milestone.status === 'delayed'
+                                  ? 'bg-gradient-to-br from-white to-red-50/15'
+                                  : 'bg-gradient-to-br from-white to-indigo-50/20'
                           }`}
                         >
                           <div className="flex justify-between items-center mb-3">
                             <span className="text-label-sm font-label-sm text-outline">PROGRESS</span>
-                            <span className={`text-label-sm font-label-sm ${colors.text} ${milestone.status === 'in_progress' ? 'font-bold' : ''}`}>
+                            <span className={`text-label-sm font-label-sm ${colors.text} font-bold`}>
                               {milestone.progress}%
                             </span>
                           </div>
-                          <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                            <div className={`${getProgressColor(milestone.status)} h-full`} style={{ width: `${milestone.progress}%` }} />
+                          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div className={`${getProgressColor(milestone.status)} h-full transition-all duration-500`} style={{ width: `${milestone.progress}%` }} />
                           </div>
                           
                           {milestone.status === 'delayed' && (
@@ -305,7 +330,7 @@ export const Timeline = () => {
                                   e.stopPropagation()
                                   setShowBlockersModal(true)
                                 }}
-                                className="text-primary font-label-sm text-label-sm hover:underline"
+                                className="text-primary font-label-sm text-label-sm hover:underline font-semibold"
                               >
                                 View Blockers
                               </button>
@@ -324,15 +349,15 @@ export const Timeline = () => {
                     <>
                       <div className="hidden md:block w-1/2 pl-12 text-left">
                         <span
-                          className={`inline-flex px-2 py-1 rounded ${
+                          className={`inline-flex px-2 py-0.5 rounded-full border ${
                             milestone.status === 'completed'
-                              ? 'bg-status-success/10 text-status-success'
+                              ? 'bg-status-success/10 text-status-success border-status-success/20'
                               : milestone.status === 'delayed'
-                                ? 'bg-status-error/10 text-status-error'
+                                ? 'bg-status-error/10 text-status-error border-status-error/20'
                                 : milestone.status === 'in_progress'
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'bg-surface-container-highest text-outline'
-                          } text-label-sm font-label-sm mb-2 uppercase`}
+                                  ? 'bg-primary/10 text-primary border-primary/20'
+                                  : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                          } text-label-sm font-label-sm mb-2 uppercase tracking-wide`}
                         >
                           {milestone.status.replace('_', ' ')}
                         </span>
@@ -341,8 +366,15 @@ export const Timeline = () => {
                       </div>
                       <div className="relative flex flex-col items-center">
                         <div
-                          className={`w-16 h-16 rounded-full bg-surface-base border-4 ${colors.border} shadow-lg flex items-center justify-center ${colors.text} group-hover:scale-110 transition-transform duration-300 ${milestone.status === 'in_progress' ? 'animate-pulse text-white' : ''}`}
-                          style={milestone.status === 'in_progress' ? { backgroundColor: '#004ac6' } : {}}
+                          className={`w-16 h-16 rounded-full border-4 ${colors.border} shadow-md flex items-center justify-center ${colors.text} group-hover:scale-115 group-hover:rotate-6 transition-all duration-300 ${
+                            milestone.status === 'in_progress'
+                              ? 'animate-pulse bg-primary text-white border-primary'
+                              : milestone.status === 'completed'
+                                ? 'bg-status-success/10 text-status-success border-status-success/40'
+                                : milestone.status === 'delayed'
+                                  ? 'bg-status-error/10 text-status-error border-status-error/40'
+                                  : 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                          }`}
                         >
                           <Icon
                             name={
@@ -352,17 +384,21 @@ export const Timeline = () => {
                                   ? 'warning'
                                   : milestone.status === 'in_progress'
                                     ? 'sync'
-                                    : 'science'
+                                    : 'calendar_today'
                             }
                             size={24}
                             filled={milestone.status === 'completed'}
                           />
                         </div>
                         <span
-                          className={`mt-4 font-label-md text-label-md ${
-                            milestone.status === 'in_progress'
-                              ? 'bg-primary-container text-on-primary-container'
-                              : 'bg-surface-container-highest'
+                          className={`mt-4 font-label-md text-label-md border ${
+                            milestone.status === 'completed'
+                              ? 'bg-status-success/10 text-status-success border-status-success/20'
+                              : milestone.status === 'delayed'
+                                ? 'bg-status-error/10 text-status-error border-status-error/20'
+                                : milestone.status === 'in_progress'
+                                  ? 'bg-primary text-white border-primary font-semibold'
+                                  : 'bg-slate-100 text-slate-600 border-slate-200'
                           } px-3 py-1 rounded-full whitespace-nowrap`}
                         >
                           {milestone.dates || 'TBD'}
@@ -371,15 +407,15 @@ export const Timeline = () => {
                       <div className="md:w-1/2 md:pr-12 mt-4 md:mt-0 w-full">
                         <div className="md:hidden">
                           <span
-                            className={`inline-flex px-2 py-1 rounded ${
+                            className={`inline-flex px-2 py-0.5 rounded-full border ${
                               milestone.status === 'completed'
-                                ? 'bg-status-success/10 text-status-success'
+                                ? 'bg-status-success/10 text-status-success border-status-success/20'
                                 : milestone.status === 'delayed'
-                                  ? 'bg-status-error/10 text-status-error'
+                                  ? 'bg-status-error/10 text-status-error border-status-error/20'
                                   : milestone.status === 'in_progress'
-                                    ? 'bg-primary/10 text-primary'
-                                    : 'bg-surface-container-highest text-outline'
-                            } text-label-sm font-label-sm mb-2 uppercase`}
+                                    ? 'bg-primary/10 text-primary border-primary/20'
+                                    : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                            } text-label-sm font-label-sm mb-2 uppercase tracking-wide`}
                           >
                             {milestone.status.replace('_', ' ')}
                           </span>
@@ -393,22 +429,32 @@ export const Timeline = () => {
                             console.log("Clicked: Milestone Card", milestone.id);
                             handleOpenEdit(milestone);
                           }}
-                          className={`bg-surface-container-lowest p-5 rounded-xl border shadow-sm group-hover:shadow-md transition-shadow cursor-pointer ${
+                          className={`bg-surface-container-lowest p-5 rounded-xl border shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300 cursor-pointer border-l-4 ${
                             milestone.status === 'in_progress'
-                              ? 'border-2 border-primary ring-4 ring-primary/5'
-                              : isScheduled
-                                ? 'border-border-subtle border-dashed'
-                                : 'border-border-subtle'
+                              ? 'border-primary ring-4 ring-primary/5 border-l-primary'
+                              : milestone.status === 'completed'
+                                ? 'border-border-subtle border-l-status-success'
+                                : milestone.status === 'delayed'
+                                  ? 'border-border-subtle border-l-status-error'
+                                  : 'border-border-subtle border-dashed border-l-indigo-400'
+                          } ${
+                            milestone.status === 'in_progress'
+                              ? 'bg-gradient-to-br from-white to-blue-50/10'
+                              : milestone.status === 'completed'
+                                ? 'bg-gradient-to-br from-white to-emerald-50/15'
+                                : milestone.status === 'delayed'
+                                  ? 'bg-gradient-to-br from-white to-red-50/15'
+                                  : 'bg-gradient-to-br from-white to-indigo-50/20'
                           }`}
                         >
                           <div className="flex justify-between items-center mb-3">
                             <span className="text-label-sm font-label-sm text-outline">PROGRESS</span>
-                            <span className={`text-label-sm font-label-sm ${colors.text} ${milestone.status === 'in_progress' ? 'font-bold' : ''}`}>
+                            <span className={`text-label-sm font-label-sm ${colors.text} font-bold`}>
                               {milestone.progress}%
                             </span>
                           </div>
-                          <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                            <div className={`${getProgressColor(milestone.status)} h-full`} style={{ width: `${milestone.progress}%` }} />
+                          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div className={`${getProgressColor(milestone.status)} h-full transition-all duration-500`} style={{ width: `${milestone.progress}%` }} />
                           </div>
                         </div>
                       </div>

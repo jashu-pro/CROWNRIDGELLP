@@ -56,13 +56,7 @@ export const Sidebar = () => {
         >
           New Package
         </button>
-        <NavLink
-          to="/help"
-          className="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-all rounded-lg font-label-md text-label-md"
-        >
-          <Icon name="help" size={20} />
-          <span>Help Center</span>
-        </NavLink>
+
         <button
           onClick={logout}
           className="flex items-center gap-3 px-3 py-2 text-status-error hover:bg-error-container/10 transition-all rounded-lg font-label-md text-label-md w-full"

@@ -113,7 +113,7 @@ export const Preview = () => {
   return (
     <Layout>
       {/* Header toolbar */}
-      <div className="sticky top-16 z-40 bg-surface/80 backdrop-blur-md border-b border-border-subtle px-container-padding-desktop py-4 flex justify-between items-center no-print -mx-margin-md -mt-margin-md mb-margin-md">
+      <div className="sticky top-16 z-30 bg-surface/80 backdrop-blur-md border-b border-border-subtle px-container-padding-desktop py-4 flex justify-between items-center no-print -mx-margin-md -mt-margin-md mb-margin-md">
         <div className="flex items-center gap-base">
           <button
             onClick={() => {
