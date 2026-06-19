@@ -70,15 +70,7 @@ export const Management = () => {
   const getProjectProgress = (pId, projStatus) => {
     if (projStatus === 'completed') return 100
     const pTasks = tasks.filter((t) => t.project_id === pId)
-    if (pTasks.length === 0) {
-      // Fallback defaults
-      if (pId === 'p1') return 68
-      if (pId === 'p2') return 42
-      if (pId === 'p3') return 100
-      if (pId === 'p4') return 35
-      if (pId === 'p5') return 15
-      return 0
-    }
+    if (pTasks.length === 0) return 0
     const completed = pTasks.filter((t) => t.completed || t.status === 'completed').length
     return Math.round((completed / pTasks.length) * 100)
   }

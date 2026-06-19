@@ -10,70 +10,35 @@ export const generateUUID = () => {
 }
 
 // ----------------------------------------------------
-// DEFAULT MOCK DATA SEEDS FOR LOCAL STORAGE
+// DEFAULT MOCK DATA SEEDS FOR LOCAL STORAGE (CLEARED)
 // ----------------------------------------------------
-const defaultProjects = [
-  { id: 'p1', client_name: 'Acme Corp', project_name: 'Cloud Infrastructure Migration', industry: 'Technology', project_type: 'Cloud Transformation', contract_value: 125000, start_date: '2026-01-12', end_date: '2026-08-15', priority: 'medium', status: 'active', notes: 'Primary target is to migrate the core legacy infrastructure to AWS VPC with zero downtime.' },
-  { id: 'p2', client_name: 'TechStart Inc', project_name: 'Data Analytics Platform', industry: 'Technology', project_type: 'Data Platform', contract_value: 200000, start_date: '2026-03-10', end_date: '2026-10-28', priority: 'high', status: 'at_risk', notes: 'Building a real-time ingestion pipeline. Team struggling with AWS Kinesis setup.' },
-  { id: 'p3', client_name: 'Global Manufacturing', project_name: 'ERP Implementation', industry: 'Manufacturing', project_type: 'ERP', contract_value: 350000, start_date: '2026-02-01', end_date: '2026-12-31', priority: 'low', status: 'completed', notes: 'SAP migration completed. System user training ongoing.' },
-  { id: 'p4', client_name: 'FinServe Ltd', project_name: 'API Gateway Redesign', industry: 'Financial Services', project_type: 'API Redesign', contract_value: 75000, start_date: '2026-04-15', end_date: '2026-09-30', priority: 'medium', status: 'active', notes: 'Updating authentication protocols. Integrating OAuth2.' },
-  { id: 'p5', client_name: 'RetailMax', project_name: 'Mobile App Development', industry: 'Retail', project_type: 'Mobile App', contract_value: 180000, start_date: '2026-05-01', end_date: '2026-11-30', priority: 'low', status: 'on_hold', notes: 'Project paused due to resource redirection.' }
-]
+const defaultProjects = []
+const defaultTeamMembers = []
+const defaultTasks = []
+const defaultMilestones = []
+const defaultChannels = []
+const defaultStakeholders = []
+const defaultEscalations = []
+const defaultMeetings = []
+const defaultIntegrations = []
 
-const defaultTeamMembers = [
-  { id: 'm1', project_id: 'p1', name: 'Elena Rodriguez', role: 'Lead Architect', department: 'Consulting', status: 'available', capacity: 84, skills: ['Cloud Architecture', 'AWS', 'Kubernetes'] },
-  { id: 'm2', project_id: 'p1', name: 'Marcus Jones', role: 'Project Manager', department: 'Delivery', status: 'available', capacity: 92, skills: ['Agile', 'Scrum', 'Stakeholder Management'] },
-  { id: 'm3', project_id: 'p1', name: 'Sarah Chen', role: 'DevOps Specialist', department: 'Engineering', status: 'busy', capacity: 78, skills: ['CI/CD', 'Docker', 'Terraform'] },
-  { id: 'm4', project_id: 'p1', name: 'David Kim', role: 'UX/UI Lead', department: 'Design', status: 'available', capacity: 65, skills: ['Figma', 'User Research', 'Prototyping'] },
-  { id: 'm5', project_id: 'p1', name: 'Alex Rivera', role: 'Backend Developer', department: 'Engineering', status: 'offline', capacity: 0, skills: ['Node.js', 'Python', 'PostgreSQL'] },
-  { id: 'm6', project_id: 'p1', name: 'Jessica Wang', role: 'QA Engineer', department: 'Quality', status: 'available', capacity: 55, skills: ['Test Automation', 'Selenium', 'Performance Testing'] }
-]
-
-const defaultTasks = [
-  { id: 't1', project_id: 'p1', title: 'Stakeholder interview and requirement documentation', due_date: '2026-10-12', priority: 'critical', status: 'pending', owner_name: 'Alex Rivera', owner_avatar: '', completed: false },
-  { id: 't2', project_id: 'p1', title: 'Infrastructure audit of legacy on-prem systems', due_date: '2026-10-10', priority: 'high', status: 'completed', owner_name: 'Elena Rodriguez', owner_avatar: '', completed: true },
-  { id: 't3', project_id: 'p1', title: 'Initial security baseline and compliance review', due_date: '2026-10-15', priority: 'medium', status: 'pending', owner_name: 'Marcus Jones', owner_avatar: '', completed: false },
-  { id: 't4', project_id: 'p1', title: 'Define migration path for non-critical assets', due_date: '2026-10-18', priority: 'low', status: 'pending', owner_name: 'Sarah Chen', owner_avatar: '', completed: false }
-]
-
-const defaultMilestones = [
-  { id: 'ms1', project_id: 'p1', title: 'Project Kickoff & Requirements', description: 'Initial stakeholder alignment and technical scope definition completed.', dates: 'Jan 12 — Jan 28, 2026', status: 'completed', progress: 100 },
-  { id: 'ms2', project_id: 'p1', title: 'Infrastructure Provisioning', description: 'Cloud VPC setup and network security group configurations. Waiting for provider verification.', dates: 'Feb 01 — Feb 15, 2026', status: 'delayed', progress: 45 },
-  { id: 'ms3', project_id: 'p1', title: 'Data Migration Scripting', description: 'Developing automated ETL pipelines for legacy database transfer.', dates: 'Mar 10 — Apr 05, 2026', status: 'in_progress', progress: 12 },
-  { id: 'ms4', project_id: 'p1', title: 'System Integration Testing', description: 'Comprehensive end-to-end testing with third-party service mocks.', dates: 'Apr 15 — May 10, 2026', status: 'scheduled', progress: 0 }
-]
-
-const defaultChannels = [
-  { id: 'c1', project_id: 'p1', type: 'slack', name: 'Slack', description: 'Primary async chat', channel_url: '#project-alpha-delivery', is_active: true },
-  { id: 'c2', project_id: 'p1', type: 'teams', name: 'MS Teams', description: 'Internal video/calls', channel_url: '', is_active: false },
-  { id: 'c3', project_id: 'p1', type: 'email', name: 'Corporate Email', description: 'Official artifacts', channel_url: 'delivery-leads@consultancy.com', is_active: true },
-  { id: 'c4', project_id: 'p1', type: 'jira', name: 'Jira Board', description: 'Task management', channel_url: 'board/PROJ-ALPHA', is_active: true }
-]
-
-const defaultStakeholders = [
-  { id: 'sh1', project_id: 'p1', name: 'Eleanor Shellstrop', role: 'Product Owner (Client)', organization: 'Client', email: 'eleanor@client.com', phone: '+1-555-0100', avatar_url: '' },
-  { id: 'sh2', project_id: 'p1', name: 'Chidi Anagonye', role: 'Lead Architect (Client)', organization: 'Client', email: 'chidi@client.com', phone: '', avatar_url: '' },
-  { id: 'sh3', project_id: 'p1', name: 'Tahani Al-Jamil', role: 'Exec Sponsor (Client)', organization: 'Client', email: '', phone: '+1-555-0102', avatar_url: '' }
-]
-
-const defaultEscalations = [
-  { id: 'e1', project_id: 'p1', level: 1, severity: 'Standard Delivery', description: 'Daily roadblocks, technical blockers', contact_name: 'Alex Morgan', contact_role: 'Delivery Lead', response_time: '4 Working Hours' },
-  { id: 'e2', project_id: 'p1', level: 2, severity: 'Project Risk', description: 'Timeline slippage, budget concerns', contact_name: 'Sarah Klein', contact_role: 'Program Manager', response_time: '24 Working Hours' },
-  { id: 'e3', project_id: 'p1', level: 3, severity: 'Critical Blocker', description: 'Contract breach, PR/Legal issue', contact_name: 'James Baron', contact_role: 'Regional VP', response_time: '2 Working Hours' }
-]
-
-const defaultMeetings = [
-  { id: 'mt1', project_id: 'p1', name: 'Daily Standup', frequency: 'Daily', day_of_week: 'M T W T F', time: '09:30 AM EST', duration: '15 Mins' },
-  { id: 'mt2', project_id: 'p1', name: 'Weekly Sync', frequency: 'Weekly', day_of_week: 'Thursday', time: '2:00 PM EST', duration: '60 Mins' }
-]
-
-const defaultIntegrations = [
-  { id: 'i1', project_id: 'p1', service: 'Slack', description: 'Team communication workspace', status: 'connected', last_used: '2 hours ago' },
-  { id: 'i2', project_id: 'p1', service: 'Jira', description: 'Project tracking & issue management', status: 'connected', last_used: '5 hours ago' },
-  { id: 'i3', project_id: 'p1', service: 'Microsoft Teams', description: 'Video conferencing & collaboration', status: 'pending', last_used: 'Never' },
-  { id: 'i4', project_id: 'p1', service: 'Confluence', description: 'Documentation & knowledge base', status: 'connected', last_used: '1 day ago' },
-  { id: 'i5', project_id: 'p1', service: 'GitHub', description: 'Source code repository', status: 'error', last_used: '3 days ago' }
-]
+// Clear any previously stored mock data from LocalStorage to ensure a clean slate
+if (typeof window !== 'undefined' && !localStorage.getItem('ko_cleared_prefilled_v1')) {
+  const keysToClear = [
+    'ko_projects',
+    'ko_team_members',
+    'ko_tasks',
+    'ko_milestones',
+    'ko_channels',
+    'ko_stakeholders',
+    'ko_escalations',
+    'ko_meetings',
+    'ko_integrations',
+    'ko_active_project_id'
+  ]
+  keysToClear.forEach(key => localStorage.removeItem(key))
+  localStorage.setItem('ko_cleared_prefilled_v1', 'true')
+}
 
 // ----------------------------------------------------
 // LOCAL STORAGE DB ENGINE WRAPPER

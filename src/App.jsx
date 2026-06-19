@@ -8,12 +8,14 @@ import { Dashboard } from './pages/Dashboard'
 import { Credentials } from './pages/Credentials'
 import { Team } from './pages/Team'
 import { Management } from './pages/Management'
+import { Login } from './pages/Login'
 import { Layout } from './components/Layout'
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/projects/new" element={<ProjectCreation />} />
       <Route path="/projects" element={<Management />} />

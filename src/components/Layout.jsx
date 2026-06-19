@@ -1,11 +1,12 @@
 import React from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { TopNavbar } from './TopNavbar'
 import { useProject } from '../context/ProjectContext'
-import { Auth } from './Auth'
 
 export const Layout = ({ children, title, activeTab }) => {
-  const { session, checkSession, loading, project } = useProject()
+  const { session, loading, project } = useProject()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -16,7 +17,7 @@ export const Layout = ({ children, title, activeTab }) => {
   }
 
   if (!session) {
-    return <Auth onSessionChange={checkSession} />
+    return <Navigate to="/login" replace state={{ from: location }} />
   }
 
   const navbarTitle = title || (project ? project.project_name : 'KickoffGen')
