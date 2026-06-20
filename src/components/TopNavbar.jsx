@@ -27,11 +27,16 @@ const formatRelativeTime = (dateStr) => {
 const getTypeColor = (type) => {
   switch (type) {
     case 'overdue':
+    case 'danger':
       return { border: 'border-l-status-error', badge: 'bg-status-error/10 text-status-error' }
     case 'due_soon':
+    case 'warning':
       return { border: 'border-l-status-warning', badge: 'bg-status-warning/10 text-status-warning' }
     case 'completed':
+    case 'success':
       return { border: 'border-l-status-success', badge: 'bg-status-success/10 text-status-success' }
+    case 'new_activity':
+    case 'info':
     default:
       return { border: 'border-l-primary', badge: 'bg-primary/10 text-primary' }
   }

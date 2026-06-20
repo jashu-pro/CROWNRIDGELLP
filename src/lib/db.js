@@ -333,6 +333,28 @@ class LocalDB {
 
 const localDB = new LocalDB()
 
+const API_URL = import.meta.env.VITE_API_URL
+
+const apiFetch = async (path, options = {}) => {
+  if (!API_URL) return null
+  try {
+    const url = `${API_URL}${path}`
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+    const response = await fetch(url, { ...options, headers })
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}))
+      throw new Error(errData.error || `HTTP error! status: ${response.status}`)
+    }
+    return await response.json()
+  } catch (err) {
+    console.warn(`Express API connection failed for ${path}:`, err.message)
+    throw err
+  }
+}
+
 // ----------------------------------------------------
 // HYBRID BACKEND CONTROLLER EXPORT
 // ----------------------------------------------------
@@ -341,6 +363,13 @@ export const db = {
 
   projects: {
     list: async () => {
+      if (API_URL) {
+        try {
+          return await apiFetch('/projects')
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false })
         if (error) throw error
@@ -349,6 +378,13 @@ export const db = {
       return localDB.getProjects()
     },
     get: async (id) => {
+      if (API_URL) {
+        try {
+          return await apiFetch(`/projects/${id}`)
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { data, error } = await supabase.from('projects').select('*').eq('id', id).single()
         if (error) throw error
@@ -367,30 +403,44 @@ export const db = {
       }
 
       let result
-      if (supabase) {
-        const payload = {
-          client_name: proj.client_name,
-          project_name: proj.project_name,
-          industry: proj.industry,
-          project_type: proj.project_type,
-          contract_value: proj.contract_value,
-          start_date: proj.start_date || null,
-          end_date: proj.end_date || null,
-          priority: proj.priority,
-          status: proj.status || 'active',
-          notes: proj.notes
+      if (API_URL) {
+        try {
+          if (proj.id) {
+            result = await apiFetch(`/projects/${proj.id}`, { method: 'PUT', body: JSON.stringify(proj) })
+          } else {
+            result = await apiFetch(`/projects`, { method: 'POST', body: JSON.stringify(proj) })
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
         }
-        if (proj.id) {
-          const { data, error } = await supabase.from('projects').update(payload).eq('id', proj.id).select().single()
-          if (error) throw error
-          result = data
+      }
+
+      if (!result) {
+        if (supabase) {
+          const payload = {
+            client_name: proj.client_name,
+            project_name: proj.project_name,
+            industry: proj.industry,
+            project_type: proj.project_type,
+            contract_value: proj.contract_value,
+            start_date: proj.start_date || null,
+            end_date: proj.end_date || null,
+            priority: proj.priority,
+            status: proj.status || 'active',
+            notes: proj.notes
+          }
+          if (proj.id) {
+            const { data, error } = await supabase.from('projects').update(payload).eq('id', proj.id).select().single()
+            if (error) throw error
+            result = data
+          } else {
+            const { data, error } = await supabase.from('projects').insert(payload).select().single()
+            if (error) throw error
+            result = data
+          }
         } else {
-          const { data, error } = await supabase.from('projects').insert(payload).select().single()
-          if (error) throw error
-          result = data
+          result = await localDB.saveProject(proj)
         }
-      } else {
-        result = await localDB.saveProject(proj)
       }
 
       // Notification Triggers
@@ -430,6 +480,14 @@ export const db = {
       return result
     },
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          await apiFetch(`/projects/${id}`, { method: 'DELETE' })
+          return
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { error } = await supabase.from('projects').delete().eq('id', id)
         if (error) throw error
@@ -441,6 +499,14 @@ export const db = {
 
   team_members: {
     list: async (projectId) => {
+      if (API_URL) {
+        try {
+          const path = projectId ? `/team_members?project_id=${projectId}` : '/team_members'
+          return await apiFetch(path)
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         let q = supabase.from('team_members').select('*')
         if (projectId) q = q.eq('project_id', projectId)
@@ -453,29 +519,43 @@ export const db = {
     save: async (member) => {
       const isNew = !member.id
       let result
-      if (supabase) {
-        const payload = {
-          project_id: member.project_id || null,
-          name: member.name,
-          role: member.role,
-          avatar_url: member.avatar_url,
-          email: member.email,
-          capacity: member.capacity,
-          status: member.status,
-          department: member.department,
-          skills: member.skills
+      if (API_URL) {
+        try {
+          if (member.id) {
+            result = await apiFetch(`/team_members/${member.id}`, { method: 'PUT', body: JSON.stringify(member) })
+          } else {
+            result = await apiFetch(`/team_members`, { method: 'POST', body: JSON.stringify(member) })
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
         }
-        if (member.id) {
-          const { data, error } = await supabase.from('team_members').update(payload).eq('id', member.id).select().single()
-          if (error) throw error
-          result = data
+      }
+
+      if (!result) {
+        if (supabase) {
+          const payload = {
+            project_id: member.project_id || null,
+            name: member.name,
+            role: member.role,
+            avatar_url: member.avatar_url,
+            email: member.email,
+            capacity: member.capacity,
+            status: member.status,
+            department: member.department,
+            skills: member.skills
+          }
+          if (member.id) {
+            const { data, error } = await supabase.from('team_members').update(payload).eq('id', member.id).select().single()
+            if (error) throw error
+            result = data
+          } else {
+            const { data, error } = await supabase.from('team_members').insert(payload).select().single()
+            if (error) throw error
+            result = data
+          }
         } else {
-          const { data, error } = await supabase.from('team_members').insert(payload).select().single()
-          if (error) throw error
-          result = data
+          result = await localDB.saveTeamMember(member)
         }
-      } else {
-        result = await localDB.saveTeamMember(member)
       }
 
       // Notification Triggers
@@ -499,6 +579,14 @@ export const db = {
       return result
     },
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          await apiFetch(`/team_members/${id}`, { method: 'DELETE' })
+          return
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { error } = await supabase.from('team_members').delete().eq('id', id)
         if (error) throw error
@@ -510,6 +598,19 @@ export const db = {
 
   tasks: {
     list: async (projectId) => {
+      if (API_URL) {
+        try {
+          const path = projectId ? `/tasks?project_id=${projectId}` : '/tasks'
+          const res = await apiFetch(path)
+          return (res || []).map((t) => ({
+            ...t,
+            completed: t.status === 'completed',
+            owner_name: t.team_members ? t.team_members.name : 'Team Member'
+          }))
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         let q = supabase.from('tasks').select('*, team_members(name)')
         if (projectId) q = q.eq('project_id', projectId)
@@ -528,7 +629,9 @@ export const db = {
       let oldTask = null
       if (!isNew && task.id) {
         try {
-          if (supabase) {
+          if (API_URL) {
+            oldTask = await apiFetch(`/tasks/${task.id}`)
+          } else if (supabase) {
             const { data } = await supabase.from('tasks').select('*').eq('id', task.id).single()
             oldTask = data
           } else {
@@ -539,45 +642,77 @@ export const db = {
       }
 
       let result
-      if (supabase) {
-        const payload = {
-          project_id: task.project_id,
-          title: task.title,
-          description: task.description,
-          due_date: task.due_date || null,
-          priority: task.priority,
-          status: task.status,
-          owner_id: task.owner_id || null,
-          progress: task.progress || 0
+      if (API_URL) {
+        try {
+          if (task.id) {
+            const res = await apiFetch(`/tasks/${task.id}`, { method: 'PUT', body: JSON.stringify(task) })
+            result = {
+              ...res,
+              completed: res.status === 'completed',
+              owner_name: res.team_members ? res.team_members.name : 'Team Member'
+            }
+          } else {
+            const res = await apiFetch(`/tasks`, { method: 'POST', body: JSON.stringify(task) })
+            result = {
+              ...res,
+              completed: res.status === 'completed',
+              owner_name: res.team_members ? res.team_members.name : 'Team Member'
+            }
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
         }
-        if (task.id) {
-          const { data, error } = await supabase.from('tasks').update(payload).eq('id', task.id).select('*, team_members(name)').single()
-          if (error) throw error
-          result = {
-            ...data,
-            completed: data.status === 'completed',
-            owner_name: data.team_members ? data.team_members.name : 'Team Member'
+      }
+
+      if (!result) {
+        if (supabase) {
+          const payload = {
+            project_id: task.project_id,
+            title: task.title,
+            description: task.description,
+            due_date: task.due_date || null,
+            priority: task.priority,
+            status: task.status,
+            owner_id: task.owner_id || null,
+            progress: task.progress || 0
+          }
+          if (task.id) {
+            const { data, error } = await supabase.from('tasks').update(payload).eq('id', task.id).select('*, team_members(name)').single()
+            if (error) throw error
+            result = {
+              ...data,
+              completed: data.status === 'completed',
+              owner_name: data.team_members ? data.team_members.name : 'Team Member'
+            }
+          } else {
+            const { data, error } = await supabase.from('tasks').insert(payload).select('*, team_members(name)').single()
+            if (error) throw error
+            result = {
+              ...data,
+              completed: data.status === 'completed',
+              owner_name: data.team_members ? data.team_members.name : 'Team Member'
+            }
           }
         } else {
-          const { data, error } = await supabase.from('tasks').insert(payload).select('*, team_members(name)').single()
-          if (error) throw error
+          const res = await localDB.saveTask(task)
           result = {
-            ...data,
-            completed: data.status === 'completed',
-            owner_name: data.team_members ? data.team_members.name : 'Team Member'
+            ...res,
+            completed: res.status === 'completed',
+            owner_name: 'Team Member'
           }
-        }
-      } else {
-        const res = await localDB.saveTask(task)
-        result = {
-          ...res,
-          completed: res.status === 'completed',
-          owner_name: 'Team Member'
         }
       }
 
       // Notification Triggers
       if (isNew) {
+        await db.notifications.triggerNotification(
+          'Task Created',
+          `Task "${result.title}" has been created.`,
+          'new_activity',
+          'task',
+          'info',
+          result.id
+        )
         if (result.priority === 'high') {
           await db.notifications.triggerNotification(
             'High-Priority Task Created',
@@ -591,7 +726,11 @@ export const db = {
         if (result.owner_id) {
           let ownerName = 'a team member'
           try {
-            if (supabase) {
+            if (API_URL) {
+              const members = await apiFetch(`/team_members`)
+              const m = members.find(mem => mem.id === result.owner_id)
+              if (m) ownerName = m.name
+            } else if (supabase) {
               const { data } = await supabase.from('team_members').select('name').eq('id', result.owner_id).single()
               if (data) ownerName = data.name
             } else {
@@ -623,7 +762,11 @@ export const db = {
         if (result.owner_id && result.owner_id !== oldTask.owner_id) {
           let ownerName = 'a team member'
           try {
-            if (supabase) {
+            if (API_URL) {
+              const members = await apiFetch(`/team_members`)
+              const m = members.find(mem => mem.id === result.owner_id)
+              if (m) ownerName = m.name
+            } else if (supabase) {
               const { data } = await supabase.from('team_members').select('name').eq('id', result.owner_id).single()
               if (data) ownerName = data.name
             } else {
@@ -650,6 +793,14 @@ export const db = {
       return result
     },
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          await apiFetch(`/tasks/${id}`, { method: 'DELETE' })
+          return
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { error } = await supabase.from('tasks').delete().eq('id', id)
         if (error) throw error
@@ -661,6 +812,18 @@ export const db = {
 
   milestones: {
     list: async (projectId) => {
+      if (API_URL) {
+        try {
+          const path = projectId ? `/milestones?project_id=${projectId}` : '/milestones'
+          const res = await apiFetch(path)
+          return (res || []).map((d) => ({
+            ...d,
+            dates: formatDates(d.start_date, d.end_date)
+          }))
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         let q = supabase.from('milestones').select('*')
         if (projectId) q = q.eq('project_id', projectId)
@@ -678,7 +841,9 @@ export const db = {
       let oldMs = null
       if (!isNew && ms.id) {
         try {
-          if (supabase) {
+          if (API_URL) {
+            oldMs = await apiFetch(`/milestones/${ms.id}`)
+          } else if (supabase) {
             const { data } = await supabase.from('milestones').select('*').eq('id', ms.id).single()
             oldMs = data
           } else {
@@ -689,38 +854,66 @@ export const db = {
       }
 
       let result
-      if (supabase) {
-        const { start_date, end_date } = parseDates(ms.dates)
-        const payload = {
-          project_id: ms.project_id,
-          title: ms.title,
-          description: ms.description,
-          start_date: start_date || ms.start_date || null,
-          end_date: end_date || ms.end_date || null,
-          status: ms.status,
-          progress: ms.progress || 0
-        }
-        if (ms.id) {
-          const { data, error } = await supabase.from('milestones').update(payload).eq('id', ms.id).select().single()
-          if (error) throw error
+      if (API_URL) {
+        try {
+          let res
+          if (ms.id) {
+            res = await apiFetch(`/milestones/${ms.id}`, { method: 'PUT', body: JSON.stringify(ms) })
+          } else {
+            res = await apiFetch(`/milestones`, { method: 'POST', body: JSON.stringify(ms) })
+          }
           result = {
-            ...data,
-            dates: formatDates(data.start_date, data.end_date)
+            ...res,
+            dates: formatDates(res.start_date, res.end_date)
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
+
+      if (!result) {
+        if (supabase) {
+          const { start_date, end_date } = parseDates(ms.dates)
+          const payload = {
+            project_id: ms.project_id,
+            title: ms.title,
+            description: ms.description,
+            start_date: start_date || ms.start_date || null,
+            end_date: end_date || ms.end_date || null,
+            status: ms.status,
+            progress: ms.progress || 0
+          }
+          if (ms.id) {
+            const { data, error } = await supabase.from('milestones').update(payload).eq('id', ms.id).select().single()
+            if (error) throw error
+            result = {
+              ...data,
+              dates: formatDates(data.start_date, data.end_date)
+            }
+          } else {
+            const { data, error } = await supabase.from('milestones').insert(payload).select().single()
+            if (error) throw error
+            result = {
+              ...data,
+              dates: formatDates(data.start_date, data.end_date)
+            }
           }
         } else {
-          const { data, error } = await supabase.from('milestones').insert(payload).select().single()
-          if (error) throw error
-          result = {
-            ...data,
-            dates: formatDates(data.start_date, data.end_date)
-          }
+          result = await localDB.saveMilestone(ms)
         }
-      } else {
-        result = await localDB.saveMilestone(ms)
       }
 
       // Notification Triggers
-      if (!isNew && oldMs && result.status === 'completed' && oldMs.status !== 'completed') {
+      if (isNew) {
+        await db.notifications.triggerNotification(
+          'Milestone Created',
+          `Milestone "${result.title}" has been scheduled.`,
+          'new_activity',
+          'milestone',
+          'info',
+          result.id
+        )
+      } else if (oldMs && result.status === 'completed' && oldMs.status !== 'completed') {
         await db.notifications.triggerNotification(
           'Milestone Completed',
           `Milestone "${result.title}" has been completed.`,
@@ -733,6 +926,14 @@ export const db = {
       return result
     },
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          await apiFetch(`/milestones/${id}`, { method: 'DELETE' })
+          return
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { error } = await supabase.from('milestones').delete().eq('id', id)
         if (error) throw error
@@ -744,6 +945,15 @@ export const db = {
 
   channels: {
     list: async (projectId) => {
+      if (API_URL) {
+        try {
+          const path = projectId ? `/communication_channels?project_id=${projectId}` : '/communication_channels'
+          const res = await apiFetch(path)
+          return (res || []).map((d) => ({ ...d, type: d.channel_type }))
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         let q = supabase.from('communication_channels').select('*')
         if (projectId) q = q.eq('project_id', projectId)
@@ -754,6 +964,17 @@ export const db = {
       return localDB.getChannels(projectId)
     },
     save: async (channel) => {
+      if (API_URL) {
+        try {
+          if (channel.id) {
+            return await apiFetch(`/communication_channels/${channel.id}`, { method: 'PUT', body: JSON.stringify(channel) })
+          } else {
+            return await apiFetch(`/communication_channels`, { method: 'POST', body: JSON.stringify(channel) })
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const payload = {
           project_id: channel.project_id,
@@ -776,6 +997,14 @@ export const db = {
       return localDB.saveChannel(channel)
     },
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          await apiFetch(`/communication_channels/${id}`, { method: 'DELETE' })
+          return
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { error } = await supabase.from('communication_channels').delete().eq('id', id)
         if (error) throw error
@@ -787,6 +1016,14 @@ export const db = {
 
   stakeholders: {
     list: async (projectId) => {
+      if (API_URL) {
+        try {
+          const path = projectId ? `/stakeholders?project_id=${projectId}` : '/stakeholders'
+          return await apiFetch(path)
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         let q = supabase.from('stakeholders').select('*')
         if (projectId) q = q.eq('project_id', projectId)
@@ -797,6 +1034,17 @@ export const db = {
       return localDB.getStakeholders(projectId)
     },
     save: async (sh) => {
+      if (API_URL) {
+        try {
+          if (sh.id) {
+            return await apiFetch(`/stakeholders/${sh.id}`, { method: 'PUT', body: JSON.stringify(sh) })
+          } else {
+            return await apiFetch(`/stakeholders`, { method: 'POST', body: JSON.stringify(sh) })
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const payload = {
           project_id: sh.project_id,
@@ -820,6 +1068,14 @@ export const db = {
       return localDB.saveStakeholder(sh)
     },
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          await apiFetch(`/stakeholders/${id}`, { method: 'DELETE' })
+          return
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { error } = await supabase.from('stakeholders').delete().eq('id', id)
         if (error) throw error
@@ -831,6 +1087,14 @@ export const db = {
 
   escalations: {
     list: async (projectId) => {
+      if (API_URL) {
+        try {
+          const path = projectId ? `/escalation_levels?project_id=${projectId}` : '/escalation_levels'
+          return await apiFetch(path)
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         let q = supabase.from('escalation_levels').select('*')
         if (projectId) q = q.eq('project_id', projectId)
@@ -841,6 +1105,17 @@ export const db = {
       return localDB.getEscalations(projectId)
     },
     save: async (esc) => {
+      if (API_URL) {
+        try {
+          if (esc.id) {
+            return await apiFetch(`/escalation_levels/${esc.id}`, { method: 'PUT', body: JSON.stringify(esc) })
+          } else {
+            return await apiFetch(`/escalation_levels`, { method: 'POST', body: JSON.stringify(esc) })
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const payload = {
           project_id: esc.project_id,
@@ -864,6 +1139,14 @@ export const db = {
       return localDB.saveEscalation(esc)
     },
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          await apiFetch(`/escalation_levels/${id}`, { method: 'DELETE' })
+          return
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { error } = await supabase.from('escalation_levels').delete().eq('id', id)
         if (error) throw error
@@ -875,6 +1158,14 @@ export const db = {
 
   meetings: {
     list: async (projectId) => {
+      if (API_URL) {
+        try {
+          const path = projectId ? `/meeting_frequencies?project_id=${projectId}` : '/meeting_frequencies'
+          return await apiFetch(path)
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         let q = supabase.from('meeting_frequencies').select('*')
         if (projectId) q = q.eq('project_id', projectId)
@@ -885,6 +1176,17 @@ export const db = {
       return localDB.getMeetings(projectId)
     },
     save: async (mt) => {
+      if (API_URL) {
+        try {
+          if (mt.id) {
+            return await apiFetch(`/meeting_frequencies/${mt.id}`, { method: 'PUT', body: JSON.stringify(mt) })
+          } else {
+            return await apiFetch(`/meeting_frequencies`, { method: 'POST', body: JSON.stringify(mt) })
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const payload = {
           project_id: mt.project_id,
@@ -908,6 +1210,14 @@ export const db = {
       return localDB.saveMeeting(mt)
     },
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          await apiFetch(`/meeting_frequencies/${id}`, { method: 'DELETE' })
+          return
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { error } = await supabase.from('meeting_frequencies').delete().eq('id', id)
         if (error) throw error
@@ -919,6 +1229,14 @@ export const db = {
 
   integrations: {
     list: async (projectId) => {
+      if (API_URL) {
+        try {
+          const path = projectId ? `/integrations?project_id=${projectId}` : '/integrations'
+          return await apiFetch(path)
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         let q = supabase.from('integrations').select('*')
         if (projectId) q = q.eq('project_id', projectId)
@@ -929,6 +1247,17 @@ export const db = {
       return localDB.getIntegrations(projectId)
     },
     save: async (integration) => {
+      if (API_URL) {
+        try {
+          if (integration.id) {
+            return await apiFetch(`/integrations/${integration.id}`, { method: 'PUT', body: JSON.stringify(integration) })
+          } else {
+            return await apiFetch(`/integrations`, { method: 'POST', body: JSON.stringify(integration) })
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const payload = {
           project_id: integration.project_id,
@@ -950,6 +1279,14 @@ export const db = {
       return localDB.saveIntegration(integration)
     },
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          await apiFetch(`/integrations/${id}`, { method: 'DELETE' })
+          return
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         const { error } = await supabase.from('integrations').delete().eq('id', id)
         if (error) throw error
@@ -961,6 +1298,13 @@ export const db = {
 
   notifications: {
     list: async (filter = 'all', page = 1, limit = 20) => {
+      if (API_URL) {
+        try {
+          return await apiFetch(`/notifications?filter=${encodeURIComponent(filter)}&page=${page}&limit=${limit}`)
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
       if (supabase) {
         try {
           let q = supabase.from('notifications').select('*', { count: 'exact' })
@@ -1012,6 +1356,18 @@ export const db = {
         return null
       }
 
+      if (API_URL) {
+        try {
+          if (notif.id) {
+            return await apiFetch(`/notifications/${notif.id}`, { method: 'PUT', body: JSON.stringify(notif) })
+          } else {
+            return await apiFetch(`/notifications`, { method: 'POST', body: JSON.stringify(notif) })
+          }
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
+
       if (supabase) {
         const payload = {
           title: notif.title,
@@ -1049,6 +1405,15 @@ export const db = {
       if (!relatedId) return false
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
       
+      if (API_URL) {
+        try {
+          const res = await apiFetch(`/notifications/check-duplicate?related_id=${encodeURIComponent(relatedId)}&category=${encodeURIComponent(category)}&type=${encodeURIComponent(type)}`)
+          return res.duplicate
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
+
       if (supabase) {
         try {
           const { data, error } = await supabase
@@ -1081,6 +1446,14 @@ export const db = {
     },
     
     markAsRead: async (id) => {
+      if (API_URL) {
+        try {
+          return await apiFetch(`/notifications/${id}/read`, { method: 'PATCH' })
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
+
       if (supabase) {
         try {
           const { data, error } = await supabase
@@ -1108,6 +1481,14 @@ export const db = {
     },
     
     markAllAsRead: async () => {
+      if (API_URL) {
+        try {
+          return await apiFetch(`/notifications/mark-all-read`, { method: 'POST' })
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
+
       if (supabase) {
         try {
           const { error } = await supabase
@@ -1130,6 +1511,14 @@ export const db = {
     },
     
     delete: async (id) => {
+      if (API_URL) {
+        try {
+          return await apiFetch(`/notifications/${id}`, { method: 'DELETE' })
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
+
       if (supabase) {
         try {
           const { error } = await supabase
@@ -1182,7 +1571,15 @@ export const db = {
         const title = `Project Progress: ${matchedThreshold}%`
         
         let exists = false
-        if (supabase) {
+        if (API_URL) {
+          try {
+            const res = await apiFetch(`/notifications?filter=project&limit=100`)
+            exists = res.data && res.data.some(n => n.related_id === projectId && n.title === title)
+          } catch (e) {
+            console.warn('Falling back to database/local due to API error:', e.message)
+          }
+        }
+        if (!exists && supabase) {
           try {
             const { data, error } = await supabase
               .from('notifications')
@@ -1200,7 +1597,7 @@ export const db = {
               exists = false
             }
           }
-        } else {
+        } else if (!exists) {
           const list = await localDB.getNotifications()
           exists = list.some(n => n.related_id === projectId && n.title === title)
         }
@@ -1330,7 +1727,15 @@ export const db = {
         const title = `Daily Summary`
         
         let exists = false
-        if (supabase) {
+        if (API_URL) {
+          try {
+            const res = await apiFetch(`/notifications?limit=100`)
+            exists = res.data && res.data.some(n => n.title === title && n.created_at.startsWith(todayStr))
+          } catch (e) {
+            console.warn('Falling back to database/local due to API error:', e.message)
+          }
+        }
+        if (!exists && supabase) {
           try {
             const { data, error } = await supabase
               .from('notifications')
@@ -1348,7 +1753,7 @@ export const db = {
               exists = false
             }
           }
-        } else {
+        } else if (!exists) {
           const list = await localDB.getNotifications()
           exists = list.some(n => n.title === title && n.created_at.startsWith(todayStr))
         }
