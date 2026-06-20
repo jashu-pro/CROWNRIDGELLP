@@ -456,7 +456,20 @@ app.get('/api/notifications/check-duplicate', async (req, res) => {
     const { related_id, category, type } = req.query
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     
-    const { data, error } = await supabase
+    // Check if there is an unread notification matching the parameters
+    const { data: unreadNotifs, error: errorUnread } = await supabase
+      .from('notifications')
+      .select('id')
+      .eq('related_id', related_id)
+      .eq('category', category)
+      .eq('type', type)
+      .eq('is_read', false)
+      .limit(1)
+      
+    if (errorUnread) throw errorUnread
+    
+    // Or if there is a notification matching the parameters created in the last 24h
+    const { data: recentNotifs, error: errorRecent } = await supabase
       .from('notifications')
       .select('id')
       .eq('related_id', related_id)
@@ -465,8 +478,9 @@ app.get('/api/notifications/check-duplicate', async (req, res) => {
       .gt('created_at', oneDayAgo)
       .limit(1)
       
-    if (error) throw error
-    res.json({ duplicate: data && data.length > 0 })
+    if (errorRecent) throw errorRecent
+    
+    res.json({ duplicate: (unreadNotifs && unreadNotifs.length > 0) || (recentNotifs && recentNotifs.length > 0) })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -496,6 +510,13 @@ app.patch('/api/notifications/:id/read', async (req, res) => {
 app.post('/api/notifications/mark-all-read', async (req, res) => {
   handleResponse(
     supabase.from('notifications').update({ is_read: true }).eq('is_read', false),
+    res
+  )
+})
+
+app.delete('/api/notifications', async (req, res) => {
+  handleResponse(
+    supabase.from('notifications').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
     res
   )
 })

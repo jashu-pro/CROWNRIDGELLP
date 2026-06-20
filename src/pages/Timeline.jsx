@@ -96,7 +96,7 @@ export const Timeline = () => {
         progress: parseInt(mProgress) || 0
       })
       await refreshProjects()
-      showToast(selectedMilestone ? 'Milestone updated!' : 'Milestone added!', 'success')
+      // showToast(selectedMilestone ? 'Milestone updated!' : 'Milestone added!', 'success')
       setShowModifyModal(false)
       fetchData()
     } catch (err) {
@@ -111,7 +111,7 @@ export const Timeline = () => {
     try {
       await db.milestones.delete(id)
       await refreshProjects()
-      showToast('Milestone removed successfully', 'success')
+      // showToast('Milestone removed successfully', 'success')
       setShowModifyModal(false)
       fetchData()
     } catch (err) {

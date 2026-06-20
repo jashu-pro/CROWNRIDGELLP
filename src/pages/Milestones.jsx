@@ -69,7 +69,7 @@ export const Milestones = () => {
         status: newStatus
       })
       await refreshProjects()
-      showToast(`Task marked as ${newStatus}`, 'success')
+      // showToast(`Task marked as ${newStatus}`, 'success')
       fetchData()
     } catch (err) {
       showToast(err.message || 'Failed to toggle task status', 'error')
@@ -100,7 +100,7 @@ export const Milestones = () => {
         completed: false
       })
       await refreshProjects()
-      showToast('Task added to checklist!', 'success')
+      // showToast('Task added to checklist!', 'success')
       setShowAddTaskModal(false)
       setTaskTitle('')
       setDueDate('')
@@ -123,7 +123,7 @@ export const Milestones = () => {
         notes: projectNote
       })
       await refreshProjects()
-      showToast('Project notes updated successfully!', 'success')
+      // showToast('Project notes updated successfully!', 'success')
       setShowAddNoteModal(false)
     } catch (err) {
       showToast(err.message || 'Failed to update notes', 'error')

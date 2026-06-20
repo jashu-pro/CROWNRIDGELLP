@@ -332,6 +332,7 @@ class LocalDB {
 }
 
 const localDB = new LocalDB()
+let lastChecksTime = 0
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -348,7 +349,8 @@ const apiFetch = async (path, options = {}) => {
       const errData = await response.json().catch(() => ({}))
       throw new Error(errData.error || `HTTP error! status: ${response.status}`)
     }
-    return await response.json()
+    const text = await response.text()
+    return text ? JSON.parse(text) : null
   } catch (err) {
     console.warn(`Express API connection failed for ${path}:`, err.message)
     throw err
@@ -1416,7 +1418,21 @@ export const db = {
 
       if (supabase) {
         try {
-          const { data, error } = await supabase
+          // Check unread first
+          const { data: unreadData, error: errorUnread } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('related_id', relatedId)
+            .eq('category', category)
+            .eq('type', type)
+            .eq('is_read', false)
+            .limit(1)
+            
+          if (errorUnread) throw errorUnread
+          if (unreadData && unreadData.length > 0) return true
+          
+          // Then check recent created
+          const { data: recentData, error: errorRecent } = await supabase
             .from('notifications')
             .select('id')
             .eq('related_id', relatedId)
@@ -1424,8 +1440,9 @@ export const db = {
             .eq('type', type)
             .gt('created_at', oneDayAgo)
             .limit(1)
-          if (error) throw error
-          return data && data.length > 0
+            
+          if (errorRecent) throw errorRecent
+          return recentData && recentData.length > 0
         } catch (e) {
           if (e.code === '42P01' || e.message?.includes('relation "public.notifications" does not exist') || e.message?.includes('does not exist')) {
             console.warn('Notifications table does not exist in Supabase yet. Falling back to local storage for duplicate check.');
@@ -1440,7 +1457,7 @@ export const db = {
         n.related_id === relatedId && 
         n.category === category && 
         n.type === type && 
-        new Date(n.created_at) > new Date(oneDayAgo)
+        (!n.is_read || new Date(n.created_at) > new Date(oneDayAgo))
       )
       return !!match
     },
@@ -1539,6 +1556,34 @@ export const db = {
       const filtered = list.filter((n) => n.id !== id)
       localDB.setTable('notifications', filtered)
     },
+    
+    deleteAll: async () => {
+      if (API_URL) {
+        try {
+          return await apiFetch(`/notifications`, { method: 'DELETE' })
+        } catch (e) {
+          console.warn('Falling back to database/local due to API error:', e.message)
+        }
+      }
+
+      if (supabase) {
+        try {
+          const { error } = await supabase
+            .from('notifications')
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000')
+          if (error) throw error
+          return
+        } catch (e) {
+          if (e.code === '42P01' || e.message?.includes('relation "public.notifications" does not exist') || e.message?.includes('does not exist')) {
+            console.warn('Notifications table does not exist in Supabase yet. Falling back to local storage for deleting all notifications.');
+          } else {
+            throw e
+          }
+        }
+      }
+      localDB.setTable('notifications', [])
+    },
 
     triggerNotification: async (title, message, type, category, priority, relatedId) => {
       try {
@@ -1620,6 +1665,12 @@ export const db = {
     },
 
     runDailyChecks: async (projectId) => {
+      const nowTime = Date.now()
+      if (nowTime - lastChecksTime < 5000) {
+        console.log('Skipping daily checks run - debounced')
+        return
+      }
+      lastChecksTime = nowTime
       try {
         console.log('Running daily notifications checks...')
         
@@ -1727,15 +1778,7 @@ export const db = {
         const title = `Daily Summary`
         
         let exists = false
-        if (API_URL) {
-          try {
-            const res = await apiFetch(`/notifications?limit=100`)
-            exists = res.data && res.data.some(n => n.title === title && n.created_at.startsWith(todayStr))
-          } catch (e) {
-            console.warn('Falling back to database/local due to API error:', e.message)
-          }
-        }
-        if (!exists && supabase) {
+        if (supabase) {
           try {
             const { data, error } = await supabase
               .from('notifications')
@@ -1746,14 +1789,20 @@ export const db = {
             if (error) throw error
             exists = data && data.length > 0
           } catch (e) {
-            if (e.code === '42P01' || e.message?.includes('relation "public.notifications" does not exist') || e.message?.includes('does not exist')) {
-              const list = await localDB.getNotifications()
-              exists = list.some(n => n.title === title && n.created_at.startsWith(todayStr))
-            } else {
-              exists = false
-            }
+            console.warn('Direct Supabase check failed for daily summary:', e.message)
           }
-        } else if (!exists) {
+        }
+        
+        if (!exists && API_URL) {
+          try {
+            const res = await apiFetch(`/notifications?filter=team&limit=100`)
+            exists = res.data && res.data.some(n => n.title === title && n.created_at.startsWith(todayStr))
+          } catch (e) {
+            console.warn('Falling back to database/local due to API error:', e.message)
+          }
+        }
+        
+        if (!exists && !supabase && !API_URL) {
           const list = await localDB.getNotifications()
           exists = list.some(n => n.title === title && n.created_at.startsWith(todayStr))
         }

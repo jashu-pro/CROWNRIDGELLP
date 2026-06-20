@@ -69,6 +69,7 @@ export const TopNavbar = () => {
   // Modals states
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false)
 
   // Edit Profile Fields
   const [tempFullName, setTempFullName] = useState(userProfile.fullName)
@@ -204,18 +205,22 @@ export const TopNavbar = () => {
     }
   }
 
-  // Load notifications and run daily checks once on app load
+  // Run daily checks when active project changes
   useEffect(() => {
-    const initNotifications = async () => {
+    const runChecks = async () => {
       try {
         await db.notifications.runDailyChecks(project?.id)
       } catch (err) {
         console.error('Daily notifications sync warning:', err)
       }
-      await fetchNotificationsData(1, false)
     }
-    initNotifications()
-  }, [project, activeFilter])
+    runChecks()
+  }, [project?.id])
+
+  // Fetch notifications list when project or activeFilter changes
+  useEffect(() => {
+    fetchNotificationsData(1, false)
+  }, [project?.id, activeFilter])
 
   // Realtime subscription setup
   useEffect(() => {
@@ -689,27 +694,40 @@ export const TopNavbar = () => {
 
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-[340px] bg-white dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="px-4 py-3 border-b border-border-subtle dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+              <div className="px-4 py-3 border-b border-border-subtle dark:border-slate-800 flex justify-between items-center bg-slate-550 dark:bg-slate-800/50">
                 <span className="font-semibold text-body-md text-on-surface">Smart Notifications</span>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation()
-                      try {
-                        await db.notifications.markAllAsRead()
-                        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
-                        setUnreadCount(0)
-                        localStorage.setItem('unread_notifications_count', '0')
-                        showToast('All notifications marked as read', 'success')
-                      } catch (err) {
-                        showToast('Failed to mark all as read', 'error')
-                      }
-                    }}
-                    className="text-[11px] text-primary hover:underline font-semibold"
-                  >
-                    Mark all as read
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        try {
+                          await db.notifications.markAllAsRead()
+                          setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+                          setUnreadCount(0)
+                          localStorage.setItem('unread_notifications_count', '0')
+                        } catch (err) {
+                          showToast('Failed to mark all as read', 'error')
+                        }
+                      }}
+                      className="text-[11px] text-primary hover:underline font-semibold"
+                    >
+                      Mark all as read
+                    </button>
+                  )}
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowDeleteAllConfirm(true)
+                      }}
+                      className="text-[11px] text-status-error hover:underline font-semibold flex items-center gap-0.5"
+                    >
+                      <Icon name="delete" size={14} />
+                      Delete all
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Filters Horizontal Bar */}
@@ -783,7 +801,6 @@ export const TopNavbar = () => {
                                       return next
                                     })
                                   }
-                                  showToast('Notification deleted', 'success')
                                 } catch (err) {
                                   showToast('Failed to delete notification', 'error')
                                 }
@@ -1281,6 +1298,40 @@ export const TopNavbar = () => {
                   Save Settings
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteAllConfirm && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-all duration-300" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-sm rounded-2xl shadow-2xl p-6 space-y-4">
+            <h3 className="font-semibold text-headline-sm text-on-surface">Confirm Delete All</h3>
+            <p className="text-body-md text-outline">Are you sure you want to delete all notifications?</p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowDeleteAllConfirm(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-on-surface font-semibold text-body-md rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setShowDeleteAllConfirm(false)
+                  try {
+                    await db.notifications.deleteAll()
+                    setNotifications([])
+                    setTotalNotificationsCount(0)
+                    setUnreadCount(0)
+                    localStorage.setItem('unread_notifications_count', '0')
+                  } catch (err) {
+                    showToast('Failed to delete all notifications', 'error')
+                  }
+                }}
+                className="px-4 py-2 bg-status-error hover:bg-status-error/95 text-white font-semibold text-body-md rounded-xl shadow-md transition-all"
+              >
+                Delete All
+              </button>
             </div>
           </div>
         </div>
